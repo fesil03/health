@@ -159,3 +159,33 @@ test('log time: minutes ago, picked time, then back to now', async ({ page }) =>
 
   await expect(log(page).locator('li span.w-12')).toHaveText(['08:05', '09:30', '10:30']);
 });
+
+test('stool details from the Stool card, and supplement times can be changed', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-11-08T22:40:00+08:00'));
+  await page.goto('./');
+
+  // Stool logged without tapping Details: the card offers it later
+  await page.getByRole('button', { name: 'Log stool now' }).click();
+  const stoolList = page.getByTestId('stool-list');
+  await stoolList.getByRole('button', { name: /Add details/ }).click();
+  await page.getByRole('radio', { name: 'Type 5' }).click();
+  await page.getByRole('button', { name: 'Save' }).click();
+  await expect(stoolList).toContainText('Type 5 · edit');
+
+  // Supplement ticked now, actually taken at 21:30
+  await page.getByRole('button', { name: 'Zinc', exact: true }).click();
+  await log(page).getByRole('button', { name: /Zinc/ }).click();
+  await page.getByLabel('Time').fill('2026-11-08T21:30');
+  await page.getByRole('button', { name: 'Save' }).click();
+  await expect(log(page).getByRole('button', { name: /Zinc/ })).toContainText('21:30');
+
+  // ...or moved to yesterday: leaves today, unticks today's chip
+  await log(page).getByRole('button', { name: /Zinc/ }).click();
+  await page.getByLabel('Time').fill('2026-11-07T23:00');
+  await page.getByRole('button', { name: 'Save' }).click();
+  await expect(log(page)).not.toContainText('Zinc');
+  await expect(page.getByRole('button', { name: 'Zinc', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Previous day' }).click();
+  await expect(log(page).getByRole('button', { name: /Zinc/ })).toContainText('23:00');
+  await expect(page.getByRole('button', { name: 'Zinc (taken)' })).toBeVisible();
+});

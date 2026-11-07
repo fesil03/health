@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.2.2 — Easier stool details, supplement times (2026-11-08)
+
+- The Stool card lists today's entries; ones without details say "Add details →".
+- A supplement's time can be changed from its entry. Moving it to another day unticks it
+  on the old day and ticks it on the new one.
+
 ## v0.2.1 — Log after the fact (2026-11-08)
 
 - New "When" row on the Log screen: Now, 15 min, 30 min, 1 h or 2 h ago, or pick a time.

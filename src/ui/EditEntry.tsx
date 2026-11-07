@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { db } from '../lib/db';
-import { deleteRecord, stoolNeedsDoctorNote, updateRecord } from '../lib/log';
+import { deleteRecord, setSupplementTaken, stoolNeedsDoctorNote, updateRecord } from '../lib/log';
 import type {
   AlcoholData,
   BodyData,
@@ -17,6 +17,7 @@ import type {
   WaterData
 } from '../lib/model';
 import { alcoholGrams } from '../lib/presets';
+import { dayOf } from '../lib/time';
 import { scheduleSync } from '../lib/syncClient';
 import { BristolPicker } from './Bristol';
 import { Chip, fromInput, Sheet, Stepper, toInput, YesNo } from './kit';
@@ -142,7 +143,12 @@ export function EditEntry({ rec, deviceId, onClose }: { rec: HealthRecord; devic
     let next = data;
     if (rec.kind === 'coffee') next = { ...data, caffeineMg: Math.round(data.shots * data.mgPerShot) };
     if (rec.kind === 'alcohol') next = { ...data, grams: alcoholGrams(data.ml, data.abv) };
-    await updateRecord(db, deviceId, rec, { data: next, at });
+    if (rec.kind === 'supplement' && dayOf(at) !== rec.day) {
+      // Supplement ticks are one per day: moving to another day = untick here, tick there.
+      const d = data as SupplementData;
+      await deleteRecord(db, deviceId, rec);
+      await setSupplementTaken({ db, deviceId, at }, { id: d.supplementId, name: d.name, when: 'morning', active: true }, true);
+    } else await updateRecord(db, deviceId, rec, { data: next, at });
     scheduleSync();
     onClose();
   }
@@ -152,7 +158,7 @@ export function EditEntry({ rec, deviceId, onClose }: { rec: HealthRecord; devic
     onClose();
   }
 
-  const readOnly = rec.kind === 'supplement' || rec.kind === 'lab';
+  const readOnly = rec.kind === 'lab';
 
   return (
     <Sheet title={title} onClose={onClose}>
