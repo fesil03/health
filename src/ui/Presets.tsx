@@ -48,17 +48,17 @@ function CoffeeEditor({ deviceId }: { deviceId: string }) {
   if (!list) return null;
   const set = (i: number, c: Partial<CoffeePreset>) => setList(list.map((x, j) => (j === i ? { ...x, ...c } : x)));
   return (
-    <details className="card" data-testid="coffee-presets">
+    <details className="section" data-testid="coffee-presets">
       <summary className="cursor-pointer font-semibold">Coffee drinks</summary>
-      <p className="mb-2 mt-2 text-xs text-slate-500">Caffeine = shots × mg per shot. "Estimated" marks café drinks where the shot count is a guess.</p>
+      <p className="mb-2 mt-2 text-xs text-steel-dim">Caffeine = shots × mg per shot. "Estimated" marks café drinks where the shot count is a guess.</p>
       {list.map((c, i) => (
         <div key={c.id} className="mb-2 grid grid-cols-[1fr_3.5rem_auto_auto] items-center gap-2">
           <input className={cell} aria-label="Drink name" value={c.name} onChange={(e) => set(i, { name: e.target.value })} />
           <input className={cell} aria-label="Shots" inputMode="numeric" value={c.shots} onChange={(e) => set(i, { shots: Number(e.target.value) || 1 })} />
-          <label className="flex items-center gap-1 text-xs text-slate-400">
+          <label className="flex items-center gap-1 text-xs text-steel">
             <input type="checkbox" checked={c.estimated} onChange={(e) => set(i, { estimated: e.target.checked })} /> est.
           </label>
-          <button className="px-2 text-slate-500" aria-label={`Remove ${c.name}`} onClick={() => setList(list.filter((_, j) => j !== i))}>
+          <button className="px-2 text-steel-dim" aria-label={`Remove ${c.name}`} onClick={() => setList(list.filter((_, j) => j !== i))}>
             ×
           </button>
         </div>
@@ -87,9 +87,9 @@ function AlcoholEditor({ deviceId }: { deviceId: string }) {
   if (!list) return null;
   const set = (i: number, c: Partial<AlcoholPreset>) => setList(list.map((x, j) => (j === i ? { ...x, ...c } : x)));
   return (
-    <details className="card">
+    <details className="section">
       <summary className="cursor-pointer font-semibold">Alcohol</summary>
-      <div className="mb-1 mt-2 grid grid-cols-[1fr_4rem_4rem_auto] gap-2 text-xs text-slate-500">
+      <div className="mb-1 mt-2 grid grid-cols-[1fr_4rem_4rem_auto] gap-2 text-xs text-steel-dim">
         <span>Name</span>
         <span>ml</span>
         <span>% ABV</span>
@@ -100,7 +100,7 @@ function AlcoholEditor({ deviceId }: { deviceId: string }) {
           <input className={cell} aria-label="Drink name" value={c.name} onChange={(e) => set(i, { name: e.target.value })} />
           <input className={cell} aria-label="Volume ml" inputMode="numeric" value={c.ml} onChange={(e) => set(i, { ml: Number(e.target.value) || 0 })} />
           <input className={cell} aria-label="ABV" inputMode="decimal" value={c.abv} onChange={(e) => set(i, { abv: Number(e.target.value) || 0 })} />
-          <button className="px-2 text-slate-500" aria-label={`Remove ${c.name}`} onClick={() => setList(list.filter((_, j) => j !== i))}>
+          <button className="px-2 text-steel-dim" aria-label={`Remove ${c.name}`} onClick={() => setList(list.filter((_, j) => j !== i))}>
             ×
           </button>
         </div>
@@ -126,9 +126,9 @@ function SupplementEditor({ deviceId }: { deviceId: string }) {
   if (!list || !saved) return null;
   const set = (i: number, c: Partial<SupplementItem>) => setList(list.map((x, j) => (j === i ? { ...x, ...c } : x)));
   return (
-    <details className="card" data-testid="supplement-presets">
+    <details className="section" data-testid="supplement-presets">
       <summary className="cursor-pointer font-semibold">Supplements</summary>
-      <p className="mb-2 mt-2 text-xs text-slate-500">Starting or stopping one adds a note to your charts automatically.</p>
+      <p className="mb-2 mt-2 text-xs text-steel-dim">Starting or stopping one adds a note to your charts automatically.</p>
       {list.map((s, i) => (
         <div key={s.id} className="mb-2 grid grid-cols-[1fr_auto_auto] items-center gap-2">
           <input className={cell} aria-label="Supplement name" value={s.name} onChange={(e) => set(i, { name: e.target.value })} />
@@ -136,7 +136,7 @@ function SupplementEditor({ deviceId }: { deviceId: string }) {
             <option value="morning">morning</option>
             <option value="night">night</option>
           </select>
-          <label className="flex items-center gap-1 text-xs text-slate-400">
+          <label className="flex items-center gap-1 text-xs text-steel">
             <input type="checkbox" aria-label={`Taking ${s.name}`} checked={s.active} onChange={(e) => set(i, { active: e.target.checked })} /> taking
           </label>
         </div>
@@ -149,7 +149,7 @@ function SupplementEditor({ deviceId }: { deviceId: string }) {
           await savePreset(db, deviceId, 'supplements', list);
           for (const text of notes) await addNote({ db, deviceId, at: nowNaive() }, text, true);
           scheduleSync();
-          toast({ text: notes.length ? `Saved · ${notes.join(', ')}` : 'Supplements saved' });
+          toast({ text: notes.length ? `Supplements saved. ${notes.join('. ')}` : 'Supplements saved' });
         }}
       />
     </details>
@@ -186,7 +186,7 @@ function WaterEditor({ deviceId }: { deviceId: string }) {
     </label>
   );
   return (
-    <details className="card">
+    <details className="section">
       <summary className="cursor-pointer font-semibold">Water</summary>
       <div className="mt-2 grid grid-cols-2 gap-3">
         {field('targetMl', 'Daily target (ml)')}
@@ -211,7 +211,7 @@ export function PresetEditors() {
   if (!deviceId) return null;
   return (
     <>
-      <h2 className="px-1 pt-2 text-sm uppercase tracking-wide text-slate-500">Presets (shared by all devices)</h2>
+      <h2 className="px-1 pt-2 text-sm text-steel-dim">Presets (shared by all devices)</h2>
       <CoffeeEditor deviceId={deviceId} />
       <SupplementEditor deviceId={deviceId} />
       <AlcoholEditor deviceId={deviceId} />

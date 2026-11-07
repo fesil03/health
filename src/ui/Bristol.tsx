@@ -50,13 +50,13 @@ export function BristolPicker({ value, onChange }: { value: number | null; onCha
           aria-label={`Type ${t}`}
           onClick={() => onChange(t)}
           className={`flex items-center gap-3 rounded-xl border px-3 py-2 text-left text-sm ${
-            value === t ? 'border-emerald-500 bg-emerald-500/10' : 'border-slate-800'
+            value === t ? 'border-lume bg-lume/15' : 'border-dial-rule'
           }`}
         >
           <span className="w-4 font-semibold tabular-nums">{t}</span>
           <BristolIcon type={t} />
-          <span className="flex-1 text-slate-300">{BRISTOL_LABELS[t]}</span>
-          <span className="text-xs text-slate-500">{t <= 2 ? 'hard' : t <= 4 ? 'normal' : 'loose'}</span>
+          <span className="flex-1 text-ink">{BRISTOL_LABELS[t]}</span>
+          <span className="text-xs text-steel-dim">{t <= 2 ? 'hard' : t <= 4 ? 'normal' : 'loose'}</span>
         </button>
       ))}
     </div>

@@ -54,7 +54,7 @@ test('quick logging: water, undo, coffee shots, stool details, supplements, alco
   await page.getByLabel('Weight (kg)').fill('72,5');
   await page.getByLabel('Body fat (%)').fill('18');
   await page.getByRole('button', { name: 'Save' }).click();
-  await expect(log(page)).toContainText('72.5 kg · 18% fat');
+  await expect(log(page)).toContainText('72.5 kg, 18% fat');
 
   // Paste a meal (no time = now) and labs (stored on their own date)
   await page.getByRole('button', { name: /Meal \/ labs/ }).click();
@@ -190,7 +190,7 @@ test('stool details from the Stool card, and supplement times can be changed', a
   await stoolList.getByRole('button', { name: /Add details/ }).click();
   await page.getByRole('radio', { name: 'Type 5' }).click();
   await page.getByRole('button', { name: 'Save' }).click();
-  await expect(stoolList).toContainText('Type 5 · edit');
+  await expect(stoolList).toContainText('Type 5');
 
   // Supplement ticked now, actually taken at 21:30
   await page.getByRole('button', { name: 'Zinc', exact: true }).click();
@@ -208,4 +208,17 @@ test('stool details from the Stool card, and supplement times can be changed', a
   await page.getByRole('button', { name: 'Previous day' }).click();
   await expect(log(page).getByRole('button', { name: /Zinc/ })).toContainText('23:00');
   await expect(page.getByRole('button', { name: 'Zinc (taken)' })).toBeVisible();
+});
+
+test('top of the Log screen: summary by default, one tap to switch, remembered', async ({ page }) => {
+  await page.goto('./');
+  await expect(page.getByTestId('top-summary')).toBeVisible();
+  await page.getByRole('radio', { name: 'Timeline' }).click();
+  await expect(page.getByTestId('top-timeline')).toBeVisible();
+  await page.getByRole('radio', { name: 'Totals' }).click();
+  await expect(page.getByTestId('top-totals')).toBeVisible();
+  await page.reload();
+  await expect(page.getByTestId('top-totals')).toBeVisible();
+  await page.getByRole('radio', { name: 'Summary' }).click();
+  await expect(page.getByTestId('top-summary')).toBeVisible();
 });

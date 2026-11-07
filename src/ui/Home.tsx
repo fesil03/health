@@ -36,15 +36,15 @@ export function Home({ go }: { go: (t: Tab) => void }) {
 
   return (
     <>
-      <section className="card">
+      <section className="section">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="font-semibold">Sync</h2>
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-steel">
               {sync.state === 'off' && 'Not set up yet: Settings → Sync.'}
               {sync.state === 'locked' && 'Locked on this device: enter the passphrase in Settings.'}
               {(sync.state === 'idle' || sync.state === 'syncing') && `Last synced ${ago(sync.lastSyncAt)}`}
-              {sync.state === 'error' && <span className="text-rose-300">{sync.message}</span>}
+              {sync.state === 'error' && <span className="text-err">{sync.message}</span>}
             </p>
           </div>
           {sync.state === 'off' || sync.state === 'locked' ? (
@@ -60,8 +60,8 @@ export function Home({ go }: { go: (t: Tab) => void }) {
       </section>
 
       {empty ? (
-        <section className="card text-center">
-          <p className="mb-3 text-slate-300">No data yet. Start with your Samsung Health export.</p>
+        <section className="section text-center">
+          <p className="mb-3 text-ink">No data yet. Start with your Samsung Health export.</p>
           <button className="btn" onClick={() => go('import')}>
             Import Samsung data
           </button>
@@ -69,10 +69,10 @@ export function Home({ go }: { go: (t: Tab) => void }) {
       ) : (
         <>
           {!!nights?.length && (
-            <section className="card">
+            <section className="section">
               <h2 className="h2">Last nights</h2>
               <table className="w-full text-sm" data-testid="nights">
-                <thead className="text-left text-slate-400">
+                <thead className="text-left text-steel">
                   <tr>
                     <th className="pb-2 font-normal">Woke up</th>
                     <th className="pb-2 font-normal">Bed → wake</th>
@@ -84,7 +84,7 @@ export function Home({ go }: { go: (t: Tab) => void }) {
                   {nights.map((n) => {
                     const d = n.data as SleepData;
                     return (
-                      <tr key={n.id} className="border-t border-slate-800">
+                      <tr key={n.id} className="border-t border-dial-rule">
                         <td className="py-2">{shortDay(n.day)}</td>
                         <td className="py-2 tabular-nums">
                           {clock(n.at)} → {clock(d.end)}
@@ -99,22 +99,22 @@ export function Home({ go }: { go: (t: Tab) => void }) {
             </section>
           )}
 
-          <section className="card">
+          <section className="section">
             <h2 className="h2">Your data</h2>
             <table className="w-full text-sm" data-testid="data-summary">
               <tbody>
                 {summary
                   .filter((s) => s.count > 0)
                   .map((s) => (
-                    <tr key={s.kind} className="border-t border-slate-800 first:border-0">
+                    <tr key={s.kind} className="border-t border-dial-rule first:border-0">
                       <td className="py-2">{KIND_LABELS[s.kind]}</td>
                       <td className="py-2 text-right tabular-nums">{s.count.toLocaleString()}</td>
-                      <td className="whitespace-nowrap py-2 pl-3 text-right text-xs text-slate-400">{range(s.first, s.last)}</td>
+                      <td className="whitespace-nowrap py-2 pl-3 text-right text-xs text-steel">{range(s.first, s.last)}</td>
                     </tr>
                   ))}
               </tbody>
             </table>
-            <p className="mt-3 text-xs text-slate-500">The Today screen and charts arrive in the next phases.</p>
+            <p className="mt-3 text-xs text-steel-dim">The Today screen and charts arrive in the next phases.</p>
           </section>
         </>
       )}

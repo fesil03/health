@@ -1,33 +1,64 @@
+@import '@fontsource-variable/archivo/wdth.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif;
   color-scheme: dark;
 }
 
 body {
+  @apply bg-dial font-sans text-base text-ink antialiased;
   -webkit-tap-highlight-color: transparent;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Condensed Archivo for anything that names or counts: section titles, numbers on the dial. */
+.cond {
+  font-stretch: 72%;
+}
+
+:focus-visible {
+  outline: 2px solid theme('colors.lume.DEFAULT');
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
 }
 
 @layer components {
+  /* A section of the page: no box, just space and a hairline above. */
+  .section {
+    @apply border-t border-dial-rule px-1 pb-5 pt-4;
+  }
+  /* Raised surface, used sparingly: sheets and the few things that float. */
   .card {
-    @apply rounded-2xl border border-slate-800 bg-slate-900 p-4;
+    @apply rounded-2xl bg-dial-raised p-4;
+  }
+  .title {
+    @apply cond text-lg font-semibold tracking-[0.01em] text-ink;
   }
   .btn {
-    @apply rounded-xl bg-emerald-500 px-4 py-2 font-medium text-slate-950 active:bg-emerald-400 disabled:opacity-40;
+    @apply rounded-full bg-lume px-5 py-2.5 font-semibold text-dial-deep transition-transform active:scale-[0.97] disabled:opacity-35;
   }
   .btn-ghost {
-    @apply rounded-xl border border-slate-700 px-4 py-2 text-slate-200 active:bg-slate-800 disabled:opacity-40;
+    @apply rounded-full border border-steel-dim/60 px-4 py-2 text-ink transition-transform active:scale-[0.97] disabled:opacity-35;
   }
   .input {
-    @apply w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none;
+    /* 16px so iOS doesn't zoom in on focus */
+    @apply w-full rounded-xl border border-dial-rule bg-dial-deep px-3 py-2.5 text-base text-ink placeholder:text-steel-dim focus:border-lume focus:outline-none;
   }
   .label {
-    @apply mb-1 block text-sm text-slate-400;
+    @apply mb-1 block text-sm text-steel;
   }
   .h2 {
-    @apply mb-3 text-lg font-semibold;
+    @apply title mb-3;
+  }
+  .meta {
+    @apply text-sm text-steel;
   }
 }
