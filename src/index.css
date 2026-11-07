@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  color-scheme: dark;
+}
+
+body {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border border-slate-800 bg-slate-900 p-4;
+  }
+  .btn {
+    @apply rounded-xl bg-emerald-500 px-4 py-2 font-medium text-slate-950 active:bg-emerald-400 disabled:opacity-40;
+  }
+  .btn-ghost {
+    @apply rounded-xl border border-slate-700 px-4 py-2 text-slate-200 active:bg-slate-800 disabled:opacity-40;
+  }
+  .input {
+    @apply w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none;
+  }
+  .label {
+    @apply mb-1 block text-sm text-slate-400;
+  }
+  .h2 {
+    @apply mb-3 text-lg font-semibold;
+  }
+}
