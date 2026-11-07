@@ -44,7 +44,7 @@ export async function connect(cfg: GitHubConfig, passphrase: string): Promise<vo
   const { key } = await unlock(new GitHubStore(cfg), passphrase);
   await db.setSetting('github', cfg);
   await db.setSetting('cryptoKey', key); // stored as a non-exportable CryptoKey
-  await refreshStatus();
+  emit({ state: 'syncing' }); // not "Synced" until the first sync has actually run
   await runSync();
 }
 
