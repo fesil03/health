@@ -1,0 +1,9 @@
+node_modules
+dist
+dev-dist
+*.local
+test-results
+playwright-report
+# never commit personal health exports
+*.zip
+samsung-export/
