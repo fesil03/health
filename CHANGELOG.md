@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.2.1 — Log after the fact (2026-11-08)
+
+- New "When" row on the Log screen: Now, 15 min, 30 min, 1 h or 2 h ago, or pick a time.
+  It applies to the next entry, then goes back to Now. The confirmation shows the time used.
+
 ## v0.2.0 — Phase 2: quick logging (2026-11-08)
 
 - New **Log** tab (opens by default) with day navigation, so past days can be filled in or fixed.
