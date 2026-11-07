@@ -42,7 +42,7 @@ export async function planImport(db: HealthDB, files: SourceFile[], deviceId: st
   return { preview, toSave };
 }
 
-export const KIND_LABELS: Record<Kind, string> = {
+export const KIND_LABELS: Record<Exclude<Kind, 'preset'>, string> = {
   sleep: 'Sleep nights',
   sleep_stage: 'Sleep stages',
   hr_hourly: 'Heart rate (hourly)',
@@ -50,5 +50,14 @@ export const KIND_LABELS: Record<Kind, string> = {
   steps_daily: 'Steps (daily)',
   spo2: 'Blood oxygen',
   exercise: 'Workouts',
-  water: 'Water (Samsung)'
+  water: 'Water',
+  stool: 'Stool',
+  coffee: 'Coffee',
+  alcohol: 'Alcohol',
+  nicotine: 'Nicotine',
+  body: 'Weight and body fat',
+  supplement: 'Supplements taken',
+  meal: 'Meals',
+  lab: 'Lab results',
+  note: 'Chart notes'
 };
