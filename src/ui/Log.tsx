@@ -273,6 +273,20 @@ export function Log() {
         >
           Log stool now
         </button>
+        {stools.length > 0 && (
+          <ul className="mt-3 space-y-1" data-testid="stool-list">
+            {stools.map((r) => (
+              <li key={r.id}>
+                <button className="flex w-full items-center justify-between rounded-xl bg-slate-800/60 px-3 py-2 text-sm" onClick={() => setEditing(r)}>
+                  <span className="tabular-nums text-slate-300">{clock(r.at)}</span>
+                  <span className={r.data.bristol ? 'text-slate-300' : 'text-amber-300'}>
+                    {r.data.bristol ? `Type ${r.data.bristol}${r.data.color ? `, ${r.data.color}` : ''} · edit` : 'Add details →'}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </Card>
 
       <Card title="Supplements" aside={`${active.filter((s) => taken.has(s.id)).length} / ${active.length}`}>
