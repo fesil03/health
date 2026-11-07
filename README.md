@@ -1,6 +1,6 @@
-# Health
+# Vitals
 
-Personal health dashboard. Installable app (PWA) on GitHub Pages, data kept on each device
+Personal health dashboard (repo `health`, app name **Vitals**). Installable app (PWA) on GitHub Pages, data kept on each device
 and synced through a **private** repo, encrypted before it leaves the device.
 
 Live: https://fesil03.github.io/health/ · Spec: "Health Dashboard — Build Spec v1" (Claude project "Health")
