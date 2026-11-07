@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.2.3 — Time per card (2026-11-08)
+
+- The "When" row at the top is replaced by a small time button on each card (water, coffee,
+  stool, supplements, alcohol and nicotine) and a time choice in the weight sheet. It applies
+  only to that card and goes back to Now after logging.
+- Fixed: right after connecting a device, the badge said "Synced" before the first sync had run.
+
 ## v0.2.2 — Easier stool details, supplement times (2026-11-08)
 
 - The Stool card lists today's entries; ones without details say "Add details →".
