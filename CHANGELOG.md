@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.1.1 — App name and release tags (2026-11-07)
+
+- App installs as **Vitals**, so it no longer clashes with Samsung Health or Apple Health.
+- Each deploy to `main` is now tagged automatically with the version in `package.json`.
+
 ## v0.1 — Phase 1: data model, Samsung import, encrypted sync (2026-11-07)
 
 - Samsung Health import from the export ZIP or CSVs: sleep (with score), sleep stages,

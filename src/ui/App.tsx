@@ -59,7 +59,7 @@ export function App() {
   return (
     <div className="mx-auto flex min-h-screen max-w-2xl flex-col">
       <header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-800 bg-slate-950/90 px-4 py-3 backdrop-blur">
-        <h1 className="text-xl font-semibold">Health</h1>
+        <h1 className="text-xl font-semibold">Vitals</h1>
         <SyncPill />
       </header>
       <main className="flex-1 space-y-4 p-4 pb-24">
