@@ -40,4 +40,5 @@ npm run test:real    # parser against a real export in ../samsung-export (never 
 CHROME_PATH=/usr/bin/google-chrome npm run smoke   # browser test: import, sync, 2nd device
 ```
 
-Branch per phase, merge to `main` after tests pass, tag `vX.Y`. Pushing `main` deploys.
+Branch per phase; merge to `main` after tests pass. Merging deploys, then CI tags the release
+with `package.json`'s version (bump it in each phase branch). To roll back, redeploy an old tag.
