@@ -73,7 +73,7 @@ export function Import({ go }: { go: (t: Tab) => void }) {
               {stage.plan.preview.map((p) => (
                 <tr key={p.kind} className="border-t border-slate-800">
                   <td className="py-2">
-                    {KIND_LABELS[p.kind]}
+                    {KIND_LABELS[p.kind as keyof typeof KIND_LABELS]}
                     <div className="text-xs text-slate-500">{range(p.first, p.last)}</div>
                   </td>
                   <td className="py-2 text-right">{p.fresh + p.updated}</td>

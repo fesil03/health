@@ -47,3 +47,18 @@ export function minutesBetween(a: string, b: string): number {
   const y = parseUtcMs(b.replace('T', ' '));
   return x === null || y === null ? 0 : Math.round((y - x) / 60_000);
 }
+
+/** The device's local wall-clock time as a naive string. */
+export function nowNaive(ms = Date.now()): string {
+  return msToNaive(ms - new Date(ms).getTimezoneOffset() * 60_000);
+}
+
+/** Today's local date, or `days` before/after it. */
+export function todayLocal(offsetDays = 0, ms = Date.now()): string {
+  return dayOf(nowNaive(ms + offsetDays * 86_400_000));
+}
+
+export function addDays(day: string, n: number): string {
+  const ms = parseUtcMs(`${day} 12:00:00`)! + n * 86_400_000;
+  return msToNaive(ms).slice(0, 10);
+}

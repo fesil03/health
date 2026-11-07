@@ -2,10 +2,13 @@ import { Component, useEffect, useState, type ReactNode } from 'react';
 import { getStatus, subscribe, type SyncStatus } from '../lib/syncClient';
 import { Home } from './Home';
 import { Import } from './Import';
+import { ToastHost } from './kit';
+import { Log } from './Log';
 import { Settings } from './Settings';
 
-export type Tab = 'home' | 'import' | 'settings';
+export type Tab = 'log' | 'home' | 'import' | 'settings';
 const TABS: { id: Tab; label: string }[] = [
+  { id: 'log', label: 'Log' },
   { id: 'home', label: 'Home' },
   { id: 'import', label: 'Import' },
   { id: 'settings', label: 'Settings' }
@@ -55,8 +58,9 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error?: Error }
 }
 
 export function App() {
-  const [tab, setTab] = useState<Tab>('home');
+  const [tab, setTab] = useState<Tab>('log');
   return (
+    <ToastHost>
     <div className="mx-auto flex min-h-screen max-w-2xl flex-col">
       <header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-800 bg-slate-950/90 px-4 py-3 backdrop-blur">
         <h1 className="text-xl font-semibold">Vitals</h1>
@@ -64,6 +68,7 @@ export function App() {
       </header>
       <main className="flex-1 space-y-4 p-4 pb-24">
         <ErrorBoundary key={tab}>
+          {tab === 'log' && <Log />}
           {tab === 'home' && <Home go={setTab} />}
           {tab === 'import' && <Import go={setTab} />}
           {tab === 'settings' && <Settings />}
@@ -83,5 +88,6 @@ export function App() {
         </div>
       </nav>
     </div>
+    </ToastHost>
   );
 }

@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.2.0 — Phase 2: quick logging (2026-11-08)
+
+- New **Log** tab (opens by default) with day navigation, so past days can be filled in or fixed.
+- One-tap logging with an Undo toast: water (glass 250 ml, bottle 350 ml, progress and pace line),
+  coffee presets (caffeine = shots × 64 mg; café drinks marked estimated; adjust shots via Details),
+  stool (time saved on tap; Bristol type, colour, ease, urgency, completeness, blood, duration later),
+  alcohol (grams computed from volume and ABV), nicotine (cigarette, vape, pouch), supplements
+  (one tick per day, morning and night groups), weight and body fat.
+- A "see a doctor if it repeats" note for blood, or black, red or pale stool.
+- Paste `#meal` and `#labs` blocks written by Claude; pasting the same block twice doesn't duplicate.
+- Every entry can be edited (including its time) or deleted; deletes sync as tombstones.
+- Presets for coffee, supplements, alcohol and water are editable in Settings and shared by all devices.
+  Starting or stopping a supplement adds a chart note automatically.
+
 ## v0.1.1 — App name and release tags (2026-11-07)
 
 - App installs as **Vitals**, so it no longer clashes with Samsung Health or Apple Health.

@@ -5,6 +5,7 @@ import { db, getDeviceId } from '../lib/db';
 import { WrongPassphraseError } from '../lib/sync/sync';
 import { checkRepo, connect, disconnect, getConfig, lock, runSync, scheduleSync } from '../lib/syncClient';
 import { useSyncStatus } from './App';
+import { PresetEditors } from './Presets';
 import { ago } from './format';
 
 const errText = (e: unknown) =>
@@ -150,6 +151,8 @@ export function Settings() {
           </div>
         )}
       </section>
+
+      <PresetEditors />
 
       <section className="card">
         <h2 className="h2">Backup</h2>

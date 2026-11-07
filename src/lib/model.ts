@@ -1,15 +1,19 @@
 // Every piece of data in the app is a HealthRecord. Records are merged across
 // devices by `id`; the newest `updatedAt` wins. Deletes are tombstones.
 
-export type Kind =
+export type SamsungKind =
   | 'sleep'
   | 'sleep_stage'
   | 'hr_hourly'
   | 'stress_hourly'
   | 'steps_daily'
   | 'spo2'
-  | 'exercise'
-  | 'water';
+  | 'exercise';
+
+export type LogKind = 'stool' | 'coffee' | 'alcohol' | 'nicotine' | 'body' | 'supplement' | 'meal' | 'lab' | 'note';
+
+/** `water` comes from both Samsung and the app's taps. `preset` holds synced preset lists. */
+export type Kind = SamsungKind | LogKind | 'water' | 'preset';
 
 export interface HealthRecord<D = unknown> {
   id: string; // stable across devices; Samsung rows use `samsung:<kind>:<datauuid>`
@@ -59,4 +63,83 @@ export interface ExerciseData {
 }
 export interface WaterData {
   ml: number;
+}
+
+// ---- Phase 2: things logged in the app ----
+
+export type StoolColor = 'brown' | 'yellow' | 'green' | 'black' | 'red' | 'pale';
+export interface StoolData {
+  bristol: number | null; // 1-7, null until details are added
+  color: StoolColor | null;
+  ease: number | null; // 1 easy … 4 hard straining
+  urgent: boolean | null;
+  complete: boolean | null;
+  blood: boolean | null;
+  durationMin: number | null;
+  note?: string;
+}
+
+export interface CoffeeData {
+  presetId: string;
+  name: string;
+  shots: number;
+  mgPerShot: number;
+  caffeineMg: number;
+  estimated: boolean; // café drinks: shot count is a guess
+  milk: string;
+}
+
+export interface AlcoholData {
+  presetId: string;
+  name: string;
+  ml: number;
+  abv: number; // percent
+  grams: number;
+}
+
+export type NicotineForm = 'cigarette' | 'vape' | 'pouch';
+export interface NicotineData {
+  form: NicotineForm;
+  count: number;
+}
+
+export interface BodyData {
+  kg: number | null;
+  fatPct: number | null;
+}
+
+export interface SupplementData {
+  supplementId: string;
+  name: string;
+}
+
+export interface MealData {
+  meal: string;
+  items: string;
+  kcal: number | null;
+  proteinG: number | null;
+  carbsG: number | null;
+  fatG: number | null;
+  fiberG: number | null;
+  oilHeavy: boolean | null;
+  note?: string;
+}
+
+export interface LabMarker {
+  marker: string;
+  value: string; // as printed, e.g. "32" or "<0.5"
+  num: number | null;
+  unit: string;
+  refLow: number | null;
+  refHigh: number | null;
+}
+export interface LabData {
+  lab: string;
+  markers: LabMarker[];
+}
+
+/** Chart notes, e.g. "Started folic acid". */
+export interface NoteData {
+  text: string;
+  auto?: boolean;
 }
