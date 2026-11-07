@@ -18,7 +18,8 @@ import { parsePaste, pasteToRecords, type PasteResult } from '../lib/paste';
 import { loadPresets, type SupplementItem } from '../lib/presets';
 import { scheduleSync } from '../lib/syncClient';
 import { addDays, nowNaive, resolveLogTime, todayLocal, type LogWhen } from '../lib/time';
-import { DayDial, GlyphIcon } from './DayDial';
+import { GlyphIcon } from './Glyphs';
+import { TodayTop, type TopStyle } from './TodayTop';
 import { describe, EditEntry } from './EditEntry';
 import { clock, shortDay } from './format';
 import { Chip, Sheet, useDeviceId, useToast } from './kit';
@@ -235,6 +236,9 @@ export function Log() {
   const setWhenFor = (k: CardKey) => (w: LogWhen) => setWhens((all) => ({ ...all, [k]: w }));
   const timeProps = (k: CardKey) => ({ when: whens[k], setWhen: setWhenFor(k) });
   const presets = useLiveQuery(() => loadPresets(db));
+  const savedTop = useLiveQuery(() => db.getSetting<TopStyle>('topStyle', 'totals'));
+  const urlTop = new URLSearchParams(location.search).get('top') as TopStyle | null; // for previews
+  const topStyle: TopStyle = urlTop ?? savedTop ?? 'totals';
   const entries = useLiveQuery(() => dayLog(db, day), [day]) ?? [];
   const sleep = useLiveQuery(async () => {
     const nights = (await db.records.where('[kind+day]').equals(['sleep', day]).toArray()).filter((r) => !r.deleted) as HealthRecord<SleepData>[];
@@ -272,7 +276,6 @@ export function Log() {
   const of = <D,>(kind: string) => entries.filter((e) => e.kind === kind) as HealthRecord<D>[];
   const waterMl = of<WaterData>('water').reduce((s, r) => s + r.data.ml, 0);
   const coffees = of<CoffeeData>('coffee');
-  const caffeine = coffees.reduce((s, r) => s + r.data.caffeineMg, 0);
   const stools = of<StoolData>('stool');
   const taken = new Set(of<{ supplementId: string }>('supplement').map((r) => r.data.supplementId));
   const target = presets.water.targetMl;
@@ -282,9 +285,6 @@ export function Log() {
   const pace = day === today ? Math.max(0, Math.min(1, (hour - 8) / 14)) : 1;
   const active = presets.supplements.filter((s) => s.active);
 
-  const meals = of('meal');
-  const drinks = entries.filter((e) => e.kind === 'alcohol' || e.kind === 'nicotine');
-  const alcoholG = of<{ grams: number }>('alcohol').reduce((s, r) => s + r.data.grams, 0);
   const nowH = day === today ? hour : null;
   const longDay = new Date(`${day}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
 
@@ -305,35 +305,7 @@ export function Log() {
         </button>
       </div>
 
-      <DayDial day={day} dayNumber={Number(day.slice(8))} entries={entries} sleep={sleep} nowHours={nowH} />
-
-      <ul className="flex flex-wrap justify-center gap-x-4 gap-y-1.5 px-2 pb-2 text-sm text-steel" aria-label="Day summary">
-        {sleep && (
-          <li className="flex items-center gap-1.5">
-            <GlyphIcon lane="sleep" /> Slept {clock(sleep.at)} to {clock(sleep.data.end)}
-          </li>
-        )}
-        <li className="flex items-center gap-1.5">
-          <GlyphIcon lane="coffee" /> {caffeine} mg caffeine
-        </li>
-        <li className="flex items-center gap-1.5">
-          <GlyphIcon lane="water" /> {waterMl.toLocaleString()} ml
-        </li>
-        <li className="flex items-center gap-1.5">
-          <GlyphIcon lane="meal" /> {meals.length} {meals.length === 1 ? 'meal' : 'meals'}
-        </li>
-        <li className="flex items-center gap-1.5">
-          <GlyphIcon lane="stool" /> {stools.length} stool
-        </li>
-        <li className="flex items-center gap-1.5">
-          <GlyphIcon lane="supplement" /> {active.filter((s) => taken.has(s.id)).length} of {active.length} supplements
-        </li>
-        {drinks.length > 0 && (
-          <li className="flex items-center gap-1.5">
-            <GlyphIcon lane="drink" /> {alcoholG ? `${alcoholG} g alcohol` : `${drinks.length} nicotine`}
-          </li>
-        )}
-      </ul>
+      <TodayTop style={topStyle} entries={entries} sleep={sleep} presets={presets} nowHours={nowH} day={day} />
 
       <Section title="Water" lane="water" {...timeProps('water')} aside={<span data-testid="water-total">{`${waterMl.toLocaleString()} / ${target.toLocaleString()} ml`}</span>}>
         <div className="relative mb-4 h-1.5 rounded-full bg-dial-rule">

@@ -209,3 +209,14 @@ test('stool details from the Stool card, and supplement times can be changed', a
   await expect(log(page).getByRole('button', { name: /Zinc/ })).toContainText('23:00');
   await expect(page.getByRole('button', { name: 'Zinc (taken)' })).toBeVisible();
 });
+
+test('top of the Log screen: totals by default, switchable in Settings', async ({ page }) => {
+  await page.goto('./');
+  await expect(page.getByTestId('top-totals')).toBeVisible();
+  for (const [name, id] of [['Timeline', 'top-timeline'], ['Summary', 'top-summary'], ['Totals', 'top-totals']]) {
+    await page.getByRole('button', { name: 'Settings', exact: true }).click();
+    await page.getByRole('radio', { name: new RegExp(`^${name}`) }).click();
+    await page.getByRole('button', { name: 'Log', exact: true }).click();
+    await expect(page.getByTestId(id)).toBeVisible();
+  }
+});
