@@ -11,7 +11,7 @@ export type Kind =
   | 'exercise'
   | 'water';
 
-export interface HealthRecord<D = Record<string, unknown>> {
+export interface HealthRecord<D = unknown> {
   id: string; // stable across devices; Samsung rows use `samsung:<kind>:<datauuid>`
   kind: Kind;
   day: string; // local date the record belongs to, YYYY-MM-DD

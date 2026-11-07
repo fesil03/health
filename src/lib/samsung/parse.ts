@@ -119,7 +119,7 @@ export function parseSamsungFile(path: string, text: string, ctx: Ctx): ParseRes
     }
     for (const [d, { row, steps }] of byDay) {
       const data: StepsData = { steps, distanceM: num(row.distance) };
-      push({ ...base(kind, d, `${d}T00:00:00`, d, row, ctx), data } as HealthRecord);
+      push({ ...base(kind, d, `${d}T00:00:00`, d, row, ctx), data });
     }
     return { kind, rows: objs.length, records, dropped };
   }
@@ -145,7 +145,7 @@ export function parseSamsungFile(path: string, text: string, ctx: Ctx): ParseRes
           durationMin: num(row.sleep_duration) ?? mins,
           efficiency: num(row.efficiency)
         };
-        push({ ...base(kind, uuid, start, dayOf(end), row, ctx), data } as HealthRecord);
+        push({ ...base(kind, uuid, start, dayOf(end), row, ctx), data });
         break;
       }
       case 'sleep_stage': {
@@ -157,7 +157,7 @@ export function parseSamsungFile(path: string, text: string, ctx: Ctx): ParseRes
         const night =
           ctx.sleepDays.get(data.sleepId) ??
           dayOf(msToNaive((parseUtcMs(start.replace('T', ' ')) ?? 0) + 12 * 3_600_000));
-        push({ ...base(kind, uuid, start, night, row, ctx), data } as HealthRecord);
+        push({ ...base(kind, uuid, start, night, row, ctx), data });
         break;
       }
       case 'hr_hourly':
@@ -169,7 +169,7 @@ export function parseSamsungFile(path: string, text: string, ctx: Ctx): ParseRes
         }
         const data: HourlyData & { tag?: string } = { end, avg, min: num(row.min), max: num(row.max) };
         if (row.tag_id) data.tag = row.tag_id;
-        push({ ...base(kind, uuid, start, dayOf(start), row, ctx), data } as HealthRecord);
+        push({ ...base(kind, uuid, start, dayOf(start), row, ctx), data });
         break;
       }
       case 'spo2': {
@@ -179,7 +179,7 @@ export function parseSamsungFile(path: string, text: string, ctx: Ctx): ParseRes
           break;
         }
         const data: Spo2Data = { end, avg, min: num(row.min) };
-        push({ ...base(kind, uuid, start, dayOf(end), row, ctx), data } as HealthRecord);
+        push({ ...base(kind, uuid, start, dayOf(end), row, ctx), data });
         break;
       }
       case 'exercise': {
@@ -198,7 +198,7 @@ export function parseSamsungFile(path: string, text: string, ctx: Ctx): ParseRes
           kcal: num(row.calorie),
           meanHr: num(row.mean_heart_rate) || null
         };
-        push({ ...base(kind, uuid, start, dayOf(start), row, ctx), data } as HealthRecord);
+        push({ ...base(kind, uuid, start, dayOf(start), row, ctx), data });
         break;
       }
       case 'water': {
@@ -208,7 +208,7 @@ export function parseSamsungFile(path: string, text: string, ctx: Ctx): ParseRes
           break;
         }
         const data: WaterData = { ml };
-        push({ ...base(kind, uuid, start, dayOf(start), row, ctx), data } as HealthRecord);
+        push({ ...base(kind, uuid, start, dayOf(start), row, ctx), data });
         break;
       }
     }
