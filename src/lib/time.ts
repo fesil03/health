@@ -62,3 +62,17 @@ export function addDays(day: string, n: number): string {
   const ms = parseUtcMs(`${day} 12:00:00`)! + n * 86_400_000;
   return msToNaive(ms).slice(0, 10);
 }
+
+export type LogWhen = { kind: 'now' } | { kind: 'ago'; min: number } | { kind: 'at'; hhmm: string };
+
+/**
+ * When a quick log should be stamped. `now` is the device's local naive time.
+ * Viewing another day keeps the current clock time on that day.
+ */
+export function resolveLogTime(day: string, now: string, when: LogWhen): string {
+  const today = dayOf(now);
+  const base = day === today ? now : `${day}T${now.slice(11)}`;
+  if (when.kind === 'at') return `${day}T${when.hhmm}:00`;
+  if (when.kind === 'ago') return msToNaive(parseUtcMs(base.replace('T', ' '))! - when.min * 60_000);
+  return base;
+}

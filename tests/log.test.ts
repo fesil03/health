@@ -192,3 +192,20 @@ describe('local time helpers', () => {
     expect(addDays('2026-12-31', 1)).toBe('2027-01-01');
   });
 });
+
+describe('log time picker', async () => {
+  const { resolveLogTime } = await import('../src/lib/time');
+  const now = '2026-11-08T10:30:15';
+  it('stamps now, minutes ago, or a picked time', () => {
+    expect(resolveLogTime('2026-11-08', now, { kind: 'now' })).toBe(now);
+    expect(resolveLogTime('2026-11-08', now, { kind: 'ago', min: 60 })).toBe('2026-11-08T09:30:15');
+    expect(resolveLogTime('2026-11-08', now, { kind: 'at', hhmm: '08:05' })).toBe('2026-11-08T08:05:00');
+  });
+  it('crosses midnight backwards', () => {
+    expect(resolveLogTime('2026-11-08', '2026-11-08T00:20:00', { kind: 'ago', min: 30 })).toBe('2026-11-07T23:50:00');
+  });
+  it('keeps the clock time when viewing an earlier day', () => {
+    expect(resolveLogTime('2026-11-05', now, { kind: 'now' })).toBe('2026-11-05T10:30:15');
+    expect(resolveLogTime('2026-11-05', now, { kind: 'at', hhmm: '21:00' })).toBe('2026-11-05T21:00:00');
+  });
+});
