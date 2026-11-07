@@ -82,7 +82,7 @@ Vitamin D | 32 | ng/mL | 30 | 100`);
     const d = new Date(Date.now() - 86_400_000);
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T21:00`;
   });
-  await page.getByLabel('Time').fill(yesterday);
+  await page.getByRole('dialog').getByLabel('Time', { exact: true }).fill(yesterday);
   await page.getByRole('button', { name: 'Save' }).click();
   await expect(log(page)).not.toContainText('Beer');
   await page.getByRole('button', { name: 'Previous day' }).click();
@@ -141,23 +141,43 @@ test('a coffee logged on the phone reaches the computer', async ({ browser }) =>
   expect(outside).toEqual([]);
 });
 
-test('log time: minutes ago, picked time, then back to now', async ({ page }) => {
+test('log time per card: minutes ago, picked time, then back to now', async ({ page }) => {
   await page.clock.setFixedTime(new Date('2026-11-08T10:30:00+08:00'));
   await page.goto('./');
-  const when = page.getByRole('region', { name: 'When' });
+  const coffee = page.getByRole('region', { name: 'Coffee' });
 
-  await when.getByRole('button', { name: '1 h ago' }).click();
-  await page.getByRole('button', { name: 'Coconut latte' }).click();
+  await coffee.getByRole('button', { name: 'Coffee time: Now' }).click();
+  await coffee.getByRole('button', { name: '1 h ago' }).click();
+  await expect(coffee.getByRole('button', { name: 'Coffee time: 1 h ago' })).toBeVisible();
+  // other cards are untouched
+  await expect(page.getByRole('button', { name: 'Water time: Now' })).toBeVisible();
+  await coffee.getByRole('button', { name: 'Coconut latte' }).click();
   await expect(toast(page)).toContainText('09:30');
-  await expect(when.getByRole('button', { name: 'Now' })).toHaveClass(/emerald/); // reset
+  await expect(coffee.getByRole('button', { name: 'Coffee time: Now' })).toBeVisible(); // reset after logging
 
-  await when.getByRole('button', { name: 'Pick time' }).click();
-  await page.getByLabel('Log time').fill('08:05');
-  await page.getByRole('button', { name: 'Double espresso (home)' }).click();
+  await coffee.getByRole('button', { name: 'Coffee time: Now' }).click();
+  await coffee.getByRole('button', { name: 'Pick time' }).click();
+  await coffee.getByLabel('Log time').fill('08:05');
+  await coffee.getByRole('button', { name: 'Double espresso (home)' }).click();
 
-  await page.getByRole('button', { name: '+ Glass 250 ml' }).click(); // now
+  await page.getByRole('button', { name: '+ Glass 250 ml' }).click(); // water: now
 
-  await expect(log(page).locator('li span.w-12')).toHaveText(['08:05', '09:30', '10:30']);
+  // stool card has its own time too
+  const stool = page.getByRole('region', { name: 'Stool' });
+  await stool.getByRole('button', { name: 'Stool time: Now' }).click();
+  await stool.getByRole('button', { name: '30 min ago' }).click();
+  await stool.getByRole('button', { name: 'Log stool now' }).click();
+
+  await expect(log(page).locator('li span.w-12')).toHaveText(['08:05', '09:30', '10:00', '10:30']);
+
+  // weight sheet has its own time
+  await page.getByRole('button', { name: /^Weight/ }).click();
+  await page.getByLabel('Weight (kg)').fill('72');
+  await page.getByRole('dialog').getByRole('button', { name: '2 h ago' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Save' }).click();
+  await expect(log(page).locator('li span.w-12').first()).toHaveText('08:05');
+  await expect(log(page)).toContainText('72 kg');
+  await expect(log(page).locator('li span.w-12')).toHaveText(['08:05', '08:30', '09:30', '10:00', '10:30']);
 });
 
 test('stool details from the Stool card, and supplement times can be changed', async ({ page }) => {
@@ -175,13 +195,13 @@ test('stool details from the Stool card, and supplement times can be changed', a
   // Supplement ticked now, actually taken at 21:30
   await page.getByRole('button', { name: 'Zinc', exact: true }).click();
   await log(page).getByRole('button', { name: /Zinc/ }).click();
-  await page.getByLabel('Time').fill('2026-11-08T21:30');
+  await page.getByRole('dialog').getByLabel('Time', { exact: true }).fill('2026-11-08T21:30');
   await page.getByRole('button', { name: 'Save' }).click();
   await expect(log(page).getByRole('button', { name: /Zinc/ })).toContainText('21:30');
 
   // ...or moved to yesterday: leaves today, unticks today's chip
   await log(page).getByRole('button', { name: /Zinc/ }).click();
-  await page.getByLabel('Time').fill('2026-11-07T23:00');
+  await page.getByRole('dialog').getByLabel('Time', { exact: true }).fill('2026-11-07T23:00');
   await page.getByRole('button', { name: 'Save' }).click();
   await expect(log(page)).not.toContainText('Zinc');
   await expect(page.getByRole('button', { name: 'Zinc', exact: true })).toBeVisible();

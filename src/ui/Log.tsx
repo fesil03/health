@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { db } from '../lib/db';
 import {
   dayLog,
@@ -22,19 +22,85 @@ import { describe, EditEntry } from './EditEntry';
 import { clock, shortDay } from './format';
 import { Chip, Sheet, useDeviceId, useToast } from './kit';
 
-function Card({ title, aside, children }: { title: string; aside?: React.ReactNode; children: React.ReactNode }) {
+const whenLabel = (w: LogWhen) =>
+  w.kind === 'now' ? 'Now' : w.kind === 'at' ? `At ${w.hhmm}` : w.min < 60 ? `${w.min} min ago` : `${w.min / 60} h ago`;
+
+const AGO = [15, 30, 60, 120];
+
+/** Now / minutes ago / pick a time. */
+function TimeChoices({ when, setWhen }: { when: LogWhen; setWhen: (w: LogWhen) => void }) {
   return (
-    <section className="card">
-      <div className="mb-3 flex items-baseline justify-between">
-        <h2 className="font-semibold">{title}</h2>
-        {aside && <span className="text-sm text-slate-400">{aside}</span>}
+    <div className="mb-3 rounded-xl bg-slate-950/60 p-2">
+      <div className="flex flex-wrap gap-2">
+        <Chip active={when.kind === 'now'} onClick={() => setWhen({ kind: 'now' })}>
+          Now
+        </Chip>
+        {AGO.map((m) => (
+          <Chip key={m} active={when.kind === 'ago' && when.min === m} onClick={() => setWhen({ kind: 'ago', min: m })}>
+            {whenLabel({ kind: 'ago', min: m })}
+          </Chip>
+        ))}
+        <Chip active={when.kind === 'at'} onClick={() => setWhen({ kind: 'at', hhmm: when.kind === 'at' ? when.hhmm : nowNaive().slice(11, 16) })}>
+          Pick time
+        </Chip>
       </div>
+      {when.kind === 'at' && (
+        <input
+          aria-label="Log time"
+          type="time"
+          className="input mt-2"
+          value={when.hhmm}
+          onChange={(e) => e.target.value && setWhen({ kind: 'at', hhmm: e.target.value })}
+        />
+      )}
+    </div>
+  );
+}
+
+function Card({
+  title,
+  aside,
+  when,
+  setWhen,
+  children
+}: {
+  title: string;
+  aside?: React.ReactNode;
+  when?: LogWhen;
+  setWhen?: (w: LogWhen) => void;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  // Close the choices once the card goes back to "now" (after logging)
+  useEffect(() => {
+    if (when?.kind === 'now') setOpen(false);
+  }, [when]);
+  return (
+    <section className="card" aria-label={title}>
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <h2 className="font-semibold">{title}</h2>
+        <div className="flex items-center gap-2">
+          {aside && <span className="text-sm text-slate-400">{aside}</span>}
+          {when && setWhen && (
+            <button
+              aria-label={`${title} time: ${whenLabel(when)}`}
+              aria-expanded={open}
+              onClick={() => setOpen(!open)}
+              className={`rounded-full px-2.5 py-1 text-xs ${when.kind === 'now' ? 'bg-slate-800 text-slate-300' : 'bg-emerald-500/20 text-emerald-200'}`}
+            >
+              🕒 {whenLabel(when)}
+            </button>
+          )}
+        </div>
+      </div>
+      {open && when && setWhen && <TimeChoices when={when} setWhen={setWhen} />}
       {children}
     </section>
   );
 }
 
-function BodySheet({ onSave, onClose, last }: { onSave: (kg: number | null, fat: number | null) => void; onClose: () => void; last?: BodyData }) {
+function BodySheet({ onSave, onClose, last }: { onSave: (kg: number | null, fat: number | null, when: LogWhen) => void; onClose: () => void; last?: BodyData }) {
+  const [when, setWhen] = useState<LogWhen>({ kind: 'now' });
   const [kg, setKg] = useState(last?.kg != null ? String(last.kg) : '');
   const [fat, setFat] = useState(last?.fatPct != null ? String(last.fatPct) : '');
   const n = (s: string) => (s.trim() ? Number(s.replace(',', '.')) : null);
@@ -50,7 +116,9 @@ function BodySheet({ onSave, onClose, last }: { onSave: (kg: number | null, fat:
           <input className="input" inputMode="decimal" value={fat} onChange={(e) => setFat(e.target.value)} />
         </label>
       </div>
-      <button className="btn mt-4 w-full" disabled={!kg && !fat} onClick={() => onSave(n(kg), n(fat))}>
+      <p className="label mt-4">When</p>
+      <TimeChoices when={when} setWhen={setWhen} />
+      <button className="btn w-full" disabled={!kg && !fat} onClick={() => onSave(n(kg), n(fat), when)}>
         Save
       </button>
     </Sheet>
@@ -124,40 +192,6 @@ function PasteSheet({ onClose, deviceId, nowAt }: { onClose: () => void; deviceI
   );
 }
 
-const AGO = [15, 30, 60, 120];
-
-function TimeRow({ when, setWhen }: { when: LogWhen; setWhen: (w: LogWhen) => void }) {
-  const [picking, setPicking] = useState(false);
-  const pickVal = when.kind === 'at' ? when.hhmm : nowNaive().slice(11, 16);
-  return (
-    <section className="card py-3" aria-label="When">
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="mr-1 text-sm text-slate-400">When</span>
-        <Chip active={when.kind === 'now'} onClick={() => { setPicking(false); setWhen({ kind: 'now' }); }}>
-          Now
-        </Chip>
-        {AGO.map((m) => (
-          <Chip key={m} active={when.kind === 'ago' && when.min === m} onClick={() => { setPicking(false); setWhen({ kind: 'ago', min: m }); }}>
-            {m < 60 ? `${m} min ago` : `${m / 60} h ago`}
-          </Chip>
-        ))}
-        <Chip active={when.kind === 'at'} onClick={() => { setPicking(true); setWhen({ kind: 'at', hhmm: pickVal }); }}>
-          {when.kind === 'at' ? `At ${when.hhmm}` : 'Pick time'}
-        </Chip>
-      </div>
-      {picking && when.kind === 'at' && (
-        <input
-          aria-label="Log time"
-          type="time"
-          className="input mt-2"
-          value={when.hhmm}
-          onChange={(e) => e.target.value && setWhen({ kind: 'at', hhmm: e.target.value })}
-        />
-      )}
-    </section>
-  );
-}
-
 export function Log() {
   const deviceId = useDeviceId();
   const toast = useToast();
@@ -165,7 +199,16 @@ export function Log() {
   const [day, setDay] = useState(today);
   const [editing, setEditing] = useState<HealthRecord | null>(null);
   const [sheet, setSheet] = useState<'body' | 'paste' | null>(null);
-  const [when, setWhen] = useState<LogWhen>({ kind: 'now' });
+  type CardKey = 'water' | 'coffee' | 'stool' | 'supplements' | 'drinks';
+  const [whens, setWhens] = useState<Record<CardKey, LogWhen>>({
+    water: { kind: 'now' },
+    coffee: { kind: 'now' },
+    stool: { kind: 'now' },
+    supplements: { kind: 'now' },
+    drinks: { kind: 'now' }
+  });
+  const setWhenFor = (k: CardKey) => (w: LogWhen) => setWhens((all) => ({ ...all, [k]: w }));
+  const timeProps = (k: CardKey) => ({ when: whens[k], setWhen: setWhenFor(k) });
   const presets = useLiveQuery(() => loadPresets(db));
   const entries = useLiveQuery(() => dayLog(db, day), [day]) ?? [];
   const lastBody = useLiveQuery(async () => {
@@ -173,14 +216,14 @@ export function Log() {
     return all.sort((a, b) => b.at.localeCompare(a.at))[0];
   });
 
-  /** Time for the next quick log: the chosen "when", on the day being viewed. */
-  const nowAt = () => resolveLogTime(day, nowNaive(), when);
-  const ctx = (): Ctx => ({ db, deviceId, at: nowAt() });
+  /** Time for a log from card `k`: its chosen "when", on the day being viewed. */
+  const nowAt = (w: LogWhen = { kind: 'now' }) => resolveLogTime(day, nowNaive(), w);
+  const ctx = (k?: CardKey, w?: LogWhen): Ctx => ({ db, deviceId, at: nowAt(w ?? (k ? whens[k] : undefined)) });
 
-  async function logged(rec: HealthRecord, text: string, details = false) {
+  async function logged(rec: HealthRecord, text: string, details = false, k?: CardKey) {
     scheduleSync();
-    const stamped = when.kind !== 'now' || day !== today;
-    setWhen({ kind: 'now' }); // back to "now" so the next log isn't stamped in the past by accident
+    const stamped = (k && whens[k].kind !== 'now') || day !== today;
+    if (k) setWhenFor(k)({ kind: 'now' }); // back to "now" so the next log isn't stamped in the past by accident
     toast({
       text: stamped ? `${text} · ${clock(rec.at)}` : text,
       actions: [
@@ -224,9 +267,7 @@ export function Log() {
         </button>
       </div>
 
-      <TimeRow when={when} setWhen={setWhen} />
-
-      <Card title="Water" aside={<span data-testid="water-total">{`${waterMl.toLocaleString()} / ${target.toLocaleString()} ml`}</span>}>
+      <Card title="Water" {...timeProps('water')} aside={<span data-testid="water-total">{`${waterMl.toLocaleString()} / ${target.toLocaleString()} ml`}</span>}>
         <div className="relative mb-3 h-3 overflow-hidden rounded-full bg-slate-800">
           <div className="h-full rounded-full bg-sky-400" style={{ width: `${pct}%` }} />
           {day === today && <div className="absolute top-0 h-full w-0.5 bg-slate-200" style={{ left: `${pace * 100}%` }} title="Pace" />}
@@ -236,7 +277,7 @@ export function Log() {
             ['Glass', presets.water.glassMl],
             ['Bottle', presets.water.bottleMl]
           ].map(([label, ml]) => (
-            <Chip key={label} onClick={async () => logged(await logWater(ctx(), ml as number), `+${ml} ml water`)}>
+            <Chip key={label} onClick={async () => logged(await logWater(ctx('water'), ml as number), `+${ml} ml water`, false, 'water')}>
               + {label} {ml} ml
             </Chip>
           ))}
@@ -245,6 +286,7 @@ export function Log() {
 
       <Card
         title="Coffee"
+        {...timeProps('coffee')}
         aside={coffees.length ? `${caffeine} mg · last ${clock(coffees.at(-1)!.at)}` : 'none yet'}
       >
         <div className="flex flex-wrap gap-2">
@@ -252,8 +294,8 @@ export function Log() {
             <Chip
               key={p.id}
               onClick={async () => {
-                const r = await logCoffee(ctx(), p);
-                logged(r, `${p.name} · ${(r.data as CoffeeData).caffeineMg} mg`, true);
+                const r = await logCoffee(ctx('coffee'), p);
+                logged(r, `${p.name} · ${(r.data as CoffeeData).caffeineMg} mg`, true, 'coffee');
               }}
             >
               {p.name}
@@ -263,12 +305,12 @@ export function Log() {
         <p className="mt-2 text-xs text-slate-500">Different number of shots? Tap Details after logging.</p>
       </Card>
 
-      <Card title="Stool" aside={stools.length ? `${stools.length} today` : undefined}>
+      <Card title="Stool" {...timeProps('stool')} aside={stools.length ? `${stools.length} today` : undefined}>
         <button
           className="btn w-full"
           onClick={async () => {
-            const r = await logStool(ctx());
-            logged(r, `Stool logged at ${clock(r.at)}`, true);
+            const r = await logStool(ctx('stool'));
+            logged(r, `Stool logged at ${clock(r.at)}`, true, 'stool');
           }}
         >
           Log stool now
@@ -289,7 +331,7 @@ export function Log() {
         )}
       </Card>
 
-      <Card title="Supplements" aside={`${active.filter((s) => taken.has(s.id)).length} / ${active.length}`}>
+      <Card title="Supplements" {...timeProps('supplements')} aside={`${active.filter((s) => taken.has(s.id)).length} / ${active.length}`}>
         {(['morning', 'night'] as const).map((when) => (
           <div key={when} className="mb-2">
             <p className="mb-1 text-xs uppercase tracking-wide text-slate-500">{when}</p>
@@ -302,8 +344,8 @@ export function Log() {
                     active={taken.has(s.id)}
                     label={`${s.name}${taken.has(s.id) ? ' (taken)' : ''}`}
                     onClick={async () => {
-                      await setSupplementTaken(ctx(), s, !taken.has(s.id));
-                      setWhen({ kind: 'now' });
+                      await setSupplementTaken(ctx('supplements'), s, !taken.has(s.id));
+                      setWhenFor('supplements')({ kind: 'now' });
                       scheduleSync();
                     }}
                   >
@@ -316,17 +358,17 @@ export function Log() {
         ))}
       </Card>
 
-      <Card title="Alcohol and nicotine">
+      <Card title="Alcohol and nicotine" {...timeProps('drinks')}>
         <div className="flex flex-wrap gap-2">
           {presets.alcohol.map((p) => (
-            <Chip key={p.id} onClick={async () => logged(await logAlcohol(ctx(), p), `${p.name} logged`)}>
+            <Chip key={p.id} onClick={async () => logged(await logAlcohol(ctx('drinks'), p), `${p.name} logged`, false, 'drinks')}>
               {p.name}
             </Chip>
           ))}
         </div>
         <div className="mt-2 flex flex-wrap gap-2">
           {(['cigarette', 'vape', 'pouch'] as NicotineForm[]).map((f) => (
-            <Chip key={f} onClick={async () => logged(await logNicotine(ctx(), f), `1 ${f} logged`)}>
+            <Chip key={f} onClick={async () => logged(await logNicotine(ctx('drinks'), f), `1 ${f} logged`, false, 'drinks')}>
               {f[0].toUpperCase() + f.slice(1)}
             </Chip>
           ))}
@@ -375,13 +417,13 @@ export function Log() {
         <BodySheet
           last={lastBody?.data as BodyData | undefined}
           onClose={() => setSheet(null)}
-          onSave={async (kg, fat) => {
+          onSave={async (kg, fat, w) => {
             setSheet(null);
-            logged(await logBody(ctx(), kg, fat), 'Weight logged');
+            logged(await logBody(ctx(undefined, w), kg, fat), w.kind === 'now' ? 'Weight logged' : `Weight logged · ${clock(nowAt(w))}`);
           }}
         />
       )}
-      {sheet === 'paste' && <PasteSheet onClose={() => setSheet(null)} deviceId={deviceId} nowAt={nowAt} />}
+      {sheet === 'paste' && <PasteSheet onClose={() => setSheet(null)} deviceId={deviceId} nowAt={() => nowAt()} />}
     </>
   );
 }
