@@ -210,13 +210,15 @@ test('stool details from the Stool card, and supplement times can be changed', a
   await expect(page.getByRole('button', { name: 'Zinc (taken)' })).toBeVisible();
 });
 
-test('top of the Log screen: totals by default, switchable in Settings', async ({ page }) => {
+test('top of the Log screen: summary by default, one tap to switch, remembered', async ({ page }) => {
   await page.goto('./');
+  await expect(page.getByTestId('top-summary')).toBeVisible();
+  await page.getByRole('radio', { name: 'Timeline' }).click();
+  await expect(page.getByTestId('top-timeline')).toBeVisible();
+  await page.getByRole('radio', { name: 'Totals' }).click();
   await expect(page.getByTestId('top-totals')).toBeVisible();
-  for (const [name, id] of [['Timeline', 'top-timeline'], ['Summary', 'top-summary'], ['Totals', 'top-totals']]) {
-    await page.getByRole('button', { name: 'Settings', exact: true }).click();
-    await page.getByRole('radio', { name: new RegExp(`^${name}`) }).click();
-    await page.getByRole('button', { name: 'Log', exact: true }).click();
-    await expect(page.getByTestId(id)).toBeVisible();
-  }
+  await page.reload();
+  await expect(page.getByTestId('top-totals')).toBeVisible();
+  await page.getByRole('radio', { name: 'Summary' }).click();
+  await expect(page.getByTestId('top-summary')).toBeVisible();
 });

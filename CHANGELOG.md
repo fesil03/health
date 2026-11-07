@@ -4,8 +4,8 @@
 
 - New palette: deep blue, aged-lume cream for what you tap,
   steel grey for secondary text, one orange hand for "now".
-- The top of the Log screen shows today in one of three styles, chosen in Settings
-  (saved per device): Totals (default), Timeline or Summary. Each kind of entry has one
+- The top of the Log screen shows today as a Summary (default), a Timeline or Totals,
+  switched with one tap; the last choice is remembered on each device. Each kind of entry has one
   colour and shape, used at the top, in its section and in the log.
 - Sections are separated by space and hairlines instead of boxes; one typeface (Archivo,
   bundled so it works offline), condensed for titles and numbers.

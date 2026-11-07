@@ -19,7 +19,7 @@ import { loadPresets, type SupplementItem } from '../lib/presets';
 import { scheduleSync } from '../lib/syncClient';
 import { addDays, nowNaive, resolveLogTime, todayLocal, type LogWhen } from '../lib/time';
 import { GlyphIcon } from './Glyphs';
-import { TodayTop, type TopStyle } from './TodayTop';
+import { DEFAULT_TOP, TodayTop, TopSwitch, type TopStyle } from './TodayTop';
 import { describe, EditEntry } from './EditEntry';
 import { clock, shortDay } from './format';
 import { Chip, Sheet, useDeviceId, useToast } from './kit';
@@ -236,9 +236,9 @@ export function Log() {
   const setWhenFor = (k: CardKey) => (w: LogWhen) => setWhens((all) => ({ ...all, [k]: w }));
   const timeProps = (k: CardKey) => ({ when: whens[k], setWhen: setWhenFor(k) });
   const presets = useLiveQuery(() => loadPresets(db));
-  const savedTop = useLiveQuery(() => db.getSetting<TopStyle>('topStyle', 'totals'));
+  const savedTop = useLiveQuery(() => db.getSetting<TopStyle>('topStyle', DEFAULT_TOP));
   const urlTop = new URLSearchParams(location.search).get('top') as TopStyle | null; // for previews
-  const topStyle: TopStyle = urlTop ?? savedTop ?? 'totals';
+  const topStyle: TopStyle = urlTop ?? savedTop ?? DEFAULT_TOP;
   const entries = useLiveQuery(() => dayLog(db, day), [day]) ?? [];
   const sleep = useLiveQuery(async () => {
     const nights = (await db.records.where('[kind+day]').equals(['sleep', day]).toArray()).filter((r) => !r.deleted) as HealthRecord<SleepData>[];
@@ -305,6 +305,7 @@ export function Log() {
         </button>
       </div>
 
+      <TopSwitch value={topStyle} onChange={(t) => void db.setSetting('topStyle', t)} />
       <TodayTop style={topStyle} entries={entries} sleep={sleep} presets={presets} nowHours={nowH} day={day} />
 
       <Section title="Water" lane="water" {...timeProps('water')} aside={<span data-testid="water-total">{`${waterMl.toLocaleString()} / ${target.toLocaleString()} ml`}</span>}>

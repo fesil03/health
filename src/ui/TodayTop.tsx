@@ -5,11 +5,33 @@ import { KIND_COLORS, Glyph, GlyphIcon } from './Glyphs';
 import { clock, hm } from './format';
 
 export type TopStyle = 'timeline' | 'totals' | 'summary';
-export const TOP_STYLES: { id: TopStyle; name: string; blurb: string }[] = [
-  { id: 'timeline', name: 'Timeline', blurb: 'A 24-hour strip with one row per category' },
-  { id: 'totals', name: 'Totals', blurb: 'Six numbers for the day' },
-  { id: 'summary', name: 'Summary', blurb: 'Your day in a few sentences' }
+export const TOP_STYLES: { id: TopStyle; name: string }[] = [
+  { id: 'summary', name: 'Summary' },
+  { id: 'timeline', name: 'Timeline' },
+  { id: 'totals', name: 'Totals' }
 ];
+export const DEFAULT_TOP: TopStyle = 'summary';
+
+/** One-tap switch between the three views. */
+export function TopSwitch({ value, onChange }: { value: TopStyle; onChange: (t: TopStyle) => void }) {
+  return (
+    <div className="mb-3 mt-3 flex justify-center">
+      <div className="inline-flex rounded-full border border-dial-rule p-0.5" role="radiogroup" aria-label="View">
+        {TOP_STYLES.map((t) => (
+          <button
+            key={t.id}
+            role="radio"
+            aria-checked={value === t.id}
+            onClick={() => onChange(t.id)}
+            className={`rounded-full px-3.5 py-1 text-sm ${value === t.id ? 'bg-lume font-semibold text-dial-deep' : 'text-steel'}`}
+          >
+            {t.name}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 interface Props {
   entries: HealthRecord[];
@@ -183,7 +205,7 @@ function Summary(p: Props) {
       <p>
         {d.coffees.length ? (
           <>
-            {count(d.coffees.length, 'coffee', 'coffees')}, <B>{d.caffeine} mg</B>, the last at <B>{clock(d.coffees.at(-1)!.at)}</B>.{' '}
+            {count(d.coffees.length, 'coffee', 'coffees')}, <B>{d.caffeine} mg</B>, {d.coffees.length > 1 ? 'the last ' : ''}at <B>{clock(d.coffees.at(-1)!.at)}</B>.{' '}
           </>
         ) : (
           <>No coffee yet. </>
@@ -208,6 +230,6 @@ function Summary(p: Props) {
 
 export function TodayTop(props: Props & { style: TopStyle }) {
   if (props.style === 'timeline') return <Timeline {...props} />;
-  if (props.style === 'summary') return <Summary {...props} />;
-  return <Totals {...props} />;
+  if (props.style === 'totals') return <Totals {...props} />;
+  return <Summary {...props} />;
 }

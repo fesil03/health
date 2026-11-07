@@ -6,7 +6,6 @@ import { WrongPassphraseError } from '../lib/sync/sync';
 import { checkRepo, connect, disconnect, getConfig, lock, runSync, scheduleSync } from '../lib/syncClient';
 import { useSyncStatus } from './App';
 import { PresetEditors } from './Presets';
-import { TOP_STYLES, type TopStyle } from './TodayTop';
 import { ago } from './format';
 
 const errText = (e: unknown) =>
@@ -92,35 +91,6 @@ function SyncSetup() {
   );
 }
 
-function TopStylePicker() {
-  const current = useLiveQuery(() => db.getSetting<TopStyle>('topStyle', 'totals'));
-  return (
-    <section className="section" aria-label="Top of the Log screen">
-      <h2 className="h2">Top of the Log screen</h2>
-      <div className="space-y-2" role="radiogroup" aria-label="Top of the Log screen">
-        {TOP_STYLES.map((t) => (
-          <button
-            key={t.id}
-            role="radio"
-            aria-checked={current === t.id}
-            onClick={() => void db.setSetting('topStyle', t.id)}
-            className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left ${
-              current === t.id ? 'border-lume bg-lume/10' : 'border-dial-rule'
-            }`}
-          >
-            <span>
-              <span className="title block text-base">{t.name}</span>
-              <span className="meta">{t.blurb}</span>
-            </span>
-            <span className={`h-4 w-4 rounded-full border-2 ${current === t.id ? 'border-lume bg-lume' : 'border-steel-dim'}`} aria-hidden="true" />
-          </button>
-        ))}
-      </div>
-      <p className="mt-2 text-xs text-steel-dim">Saved on this device only.</p>
-    </section>
-  );
-}
-
 export function Settings() {
   const sync = useSyncStatus();
   const cfg = useLiveQuery(() => getConfig());
@@ -181,8 +151,6 @@ export function Settings() {
           </div>
         )}
       </section>
-
-      <TopStylePicker />
 
       <PresetEditors />
 
