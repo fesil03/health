@@ -13,14 +13,25 @@ import {
   setSupplementTaken,
   type Ctx
 } from '../lib/log';
-import type { BodyData, CoffeeData, HealthRecord, NicotineForm, StoolData, WaterData } from '../lib/model';
+import type { BodyData, CoffeeData, HealthRecord, NicotineForm, SleepData, StoolData, WaterData } from '../lib/model';
 import { parsePaste, pasteToRecords, type PasteResult } from '../lib/paste';
 import { loadPresets, type SupplementItem } from '../lib/presets';
 import { scheduleSync } from '../lib/syncClient';
 import { addDays, nowNaive, resolveLogTime, todayLocal, type LogWhen } from '../lib/time';
+import { DayDial, GlyphIcon } from './DayDial';
 import { describe, EditEntry } from './EditEntry';
 import { clock, shortDay } from './format';
 import { Chip, Sheet, useDeviceId, useToast } from './kit';
+
+const LANE_OF: Record<string, Parameters<typeof GlyphIcon>[0]['lane'] | undefined> = {
+  coffee: 'coffee',
+  water: 'water',
+  meal: 'meal',
+  stool: 'stool',
+  supplement: 'supplement',
+  alcohol: 'drink',
+  nicotine: 'drink'
+};
 
 const whenLabel = (w: LogWhen) =>
   w.kind === 'now' ? 'Now' : w.kind === 'at' ? `At ${w.hhmm}` : w.min < 60 ? `${w.min} min ago` : `${w.min / 60} h ago`;
@@ -30,7 +41,7 @@ const AGO = [15, 30, 60, 120];
 /** Now / minutes ago / pick a time. */
 function TimeChoices({ when, setWhen }: { when: LogWhen; setWhen: (w: LogWhen) => void }) {
   return (
-    <div className="mb-3 rounded-xl bg-slate-950/60 p-2">
+    <div className="mb-3 rounded-2xl bg-dial-deep p-2.5">
       <div className="flex flex-wrap gap-2">
         <Chip active={when.kind === 'now'} onClick={() => setWhen({ kind: 'now' })}>
           Now
@@ -57,41 +68,55 @@ function TimeChoices({ when, setWhen }: { when: LogWhen; setWhen: (w: LogWhen) =
   );
 }
 
-function Card({
+function ClockIcon() {
+  return (
+    <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" aria-hidden="true">
+      <circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M8 4.6V8l2.4 1.6" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function Section({
   title,
+  lane,
   aside,
   when,
   setWhen,
   children
 }: {
   title: string;
+  lane?: Parameters<typeof GlyphIcon>[0]['lane'];
   aside?: React.ReactNode;
   when?: LogWhen;
   setWhen?: (w: LogWhen) => void;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
-  // Close the choices once the card goes back to "now" (after logging)
+  // Close the choices once the section goes back to "now" (after logging)
   useEffect(() => {
     if (when?.kind === 'now') setOpen(false);
   }, [when]);
   return (
-    <section className="card" aria-label={title}>
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <h2 className="font-semibold">{title}</h2>
-        <div className="flex items-center gap-2">
-          {aside && <span className="text-sm text-slate-400">{aside}</span>}
-          {when && setWhen && (
-            <button
-              aria-label={`${title} time: ${whenLabel(when)}`}
-              aria-expanded={open}
-              onClick={() => setOpen(!open)}
-              className={`rounded-full px-2.5 py-1 text-xs ${when.kind === 'now' ? 'bg-slate-800 text-slate-300' : 'bg-emerald-500/20 text-emerald-200'}`}
-            >
-              🕒 {whenLabel(when)}
-            </button>
-          )}
-        </div>
+    <section className="section" aria-label={title}>
+      <div className="mb-3 flex items-center gap-2">
+        {lane && <GlyphIcon lane={lane} />}
+        <h2 className="title">{title}</h2>
+        {aside && <span className="meta ml-1 truncate">{aside}</span>}
+        <span className="flex-1" />
+        {when && setWhen && (
+          <button
+            aria-label={`${title} time: ${whenLabel(when)}`}
+            aria-expanded={open}
+            onClick={() => setOpen(!open)}
+            className={`flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs ${
+              when.kind === 'now' ? 'border-dial-rule text-steel' : 'border-lume bg-lume/15 text-lume'
+            }`}
+          >
+            <ClockIcon />
+            {whenLabel(when)}
+          </button>
+        )}
       </div>
       {open && when && setWhen && <TimeChoices when={when} setWhen={setWhen} />}
       {children}
@@ -151,7 +176,7 @@ function PasteSheet({ onClose, deviceId, nowAt }: { onClose: () => void; deviceI
   const ok = parsed && (parsed.meals.length || parsed.labs.length);
   return (
     <Sheet title="Paste from Claude" onClose={onClose}>
-      <p className="mb-2 text-sm text-slate-400">Paste a #meal or #labs block from the chat.</p>
+      <p className="mb-2 text-sm text-steel">Paste a #meal or #labs block from the chat.</p>
       <textarea
         data-testid="paste-box"
         className="input font-mono text-xs"
@@ -169,8 +194,8 @@ function PasteSheet({ onClose, deviceId, nowAt }: { onClose: () => void; deviceI
         <div className="mt-3 space-y-1 text-sm" data-testid="paste-preview">
           {parsed.meals.map((m, i) => (
             <p key={i}>
-              <span className="text-slate-400">{m.at ? `${m.at.slice(5, 10)} ${clock(m.at)}` : 'now'} · </span>
-              {m.data.meal}: {m.data.items} {m.data.kcal != null && <span className="text-slate-400">({m.data.kcal} kcal)</span>}
+              <span className="text-steel">{m.at ? `${m.at.slice(5, 10)} ${clock(m.at)}` : 'Now'} </span>
+              {m.data.meal}: {m.data.items} {m.data.kcal != null && <span className="text-steel">({m.data.kcal} kcal)</span>}
             </p>
           ))}
           {parsed.labs.map((l, i) => (
@@ -179,7 +204,7 @@ function PasteSheet({ onClose, deviceId, nowAt }: { onClose: () => void; deviceI
             </p>
           ))}
           {parsed.errors.map((e, i) => (
-            <p key={i} className="text-rose-300">
+            <p key={i} className="text-err">
               {e}
             </p>
           ))}
@@ -211,6 +236,10 @@ export function Log() {
   const timeProps = (k: CardKey) => ({ when: whens[k], setWhen: setWhenFor(k) });
   const presets = useLiveQuery(() => loadPresets(db));
   const entries = useLiveQuery(() => dayLog(db, day), [day]) ?? [];
+  const sleep = useLiveQuery(async () => {
+    const nights = (await db.records.where('[kind+day]').equals(['sleep', day]).toArray()).filter((r) => !r.deleted) as HealthRecord<SleepData>[];
+    return nights.sort((a, b) => (b.data.durationMin ?? 0) - (a.data.durationMin ?? 0))[0];
+  }, [day]);
   const lastBody = useLiveQuery(async () => {
     const all = (await db.records.where('kind').equals('body').toArray()).filter((r) => !r.deleted);
     return all.sort((a, b) => b.at.localeCompare(a.at))[0];
@@ -225,7 +254,7 @@ export function Log() {
     const stamped = (k && whens[k].kind !== 'now') || day !== today;
     if (k) setWhenFor(k)({ kind: 'now' }); // back to "now" so the next log isn't stamped in the past by accident
     toast({
-      text: stamped ? `${text} · ${clock(rec.at)}` : text,
+      text: stamped ? `${text} at ${clock(rec.at)}` : text,
       actions: [
         ...(details ? [{ label: 'Details', run: () => setEditing(rec) }] : []),
         {
@@ -253,59 +282,94 @@ export function Log() {
   const pace = day === today ? Math.max(0, Math.min(1, (hour - 8) / 14)) : 1;
   const active = presets.supplements.filter((s) => s.active);
 
+  const meals = of('meal');
+  const drinks = entries.filter((e) => e.kind === 'alcohol' || e.kind === 'nicotine');
+  const alcoholG = of<{ grams: number }>('alcohol').reduce((s, r) => s + r.data.grams, 0);
+  const nowH = day === today ? hour : null;
+  const longDay = new Date(`${day}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+
   return (
     <>
-      <div className="flex items-center justify-between">
-        <button className="btn-ghost px-3" aria-label="Previous day" onClick={() => setDay(addDays(day, -1))}>
+      <div className="flex items-center justify-between pb-1">
+        <button className="h-10 w-10 rounded-full border border-dial-rule text-lg text-steel disabled:opacity-30" aria-label="Previous day" onClick={() => setDay(addDays(day, -1))}>
           ‹
         </button>
-        <span className="font-semibold" data-testid="log-day">
-          {day === today ? 'Today' : shortDay(day)}
-        </span>
-        <button className="btn-ghost px-3" aria-label="Next day" disabled={day >= today} onClick={() => setDay(addDays(day, 1))}>
+        <div className="text-center">
+          <p className="title text-xl" data-testid="log-day">
+            {day === today ? 'Today' : shortDay(day)}
+          </p>
+          <p className="meta">{longDay}</p>
+        </div>
+        <button className="h-10 w-10 rounded-full border border-dial-rule text-lg text-steel disabled:opacity-30" aria-label="Next day" disabled={day >= today} onClick={() => setDay(addDays(day, 1))}>
           ›
         </button>
       </div>
 
-      <Card title="Water" {...timeProps('water')} aside={<span data-testid="water-total">{`${waterMl.toLocaleString()} / ${target.toLocaleString()} ml`}</span>}>
-        <div className="relative mb-3 h-3 overflow-hidden rounded-full bg-slate-800">
-          <div className="h-full rounded-full bg-sky-400" style={{ width: `${pct}%` }} />
-          {day === today && <div className="absolute top-0 h-full w-0.5 bg-slate-200" style={{ left: `${pace * 100}%` }} title="Pace" />}
+      <DayDial day={day} dayNumber={Number(day.slice(8))} entries={entries} sleep={sleep} nowHours={nowH} />
+
+      <ul className="flex flex-wrap justify-center gap-x-4 gap-y-1.5 px-2 pb-2 text-sm text-steel" aria-label="Day summary">
+        {sleep && (
+          <li className="flex items-center gap-1.5">
+            <GlyphIcon lane="sleep" /> Slept {clock(sleep.at)} to {clock(sleep.data.end)}
+          </li>
+        )}
+        <li className="flex items-center gap-1.5">
+          <GlyphIcon lane="coffee" /> {caffeine} mg caffeine
+        </li>
+        <li className="flex items-center gap-1.5">
+          <GlyphIcon lane="water" /> {waterMl.toLocaleString()} ml
+        </li>
+        <li className="flex items-center gap-1.5">
+          <GlyphIcon lane="meal" /> {meals.length} {meals.length === 1 ? 'meal' : 'meals'}
+        </li>
+        <li className="flex items-center gap-1.5">
+          <GlyphIcon lane="stool" /> {stools.length} stool
+        </li>
+        <li className="flex items-center gap-1.5">
+          <GlyphIcon lane="supplement" /> {active.filter((s) => taken.has(s.id)).length} of {active.length} supplements
+        </li>
+        {drinks.length > 0 && (
+          <li className="flex items-center gap-1.5">
+            <GlyphIcon lane="drink" /> {alcoholG ? `${alcoholG} g alcohol` : `${drinks.length} nicotine`}
+          </li>
+        )}
+      </ul>
+
+      <Section title="Water" lane="water" {...timeProps('water')} aside={<span data-testid="water-total">{`${waterMl.toLocaleString()} / ${target.toLocaleString()} ml`}</span>}>
+        <div className="relative mb-4 h-1.5 rounded-full bg-dial-rule">
+          <div className="h-full rounded-full bg-cat-water" style={{ width: `${pct}%` }} />
+          {day === today && <div className="absolute -top-1 h-3.5 w-0.5 rounded bg-lume" style={{ left: `${pace * 100}%` }} title="Where you'd be on an even day" />}
         </div>
         <div className="flex gap-2">
           {[
             ['Glass', presets.water.glassMl],
             ['Bottle', presets.water.bottleMl]
           ].map(([label, ml]) => (
-            <Chip key={label} onClick={async () => logged(await logWater(ctx('water'), ml as number), `+${ml} ml water`, false, 'water')}>
+            <Chip key={label} onClick={async () => logged(await logWater(ctx('water'), ml as number), `Water +${ml} ml`, false, 'water')}>
               + {label} {ml} ml
             </Chip>
           ))}
         </div>
-      </Card>
+      </Section>
 
-      <Card
-        title="Coffee"
-        {...timeProps('coffee')}
-        aside={coffees.length ? `${caffeine} mg · last ${clock(coffees.at(-1)!.at)}` : 'none yet'}
-      >
+      <Section title="Coffee" lane="coffee" {...timeProps('coffee')} aside={coffees.length ? `last at ${clock(coffees.at(-1)!.at)}` : undefined}>
         <div className="flex flex-wrap gap-2">
           {presets.coffee.map((p) => (
             <Chip
               key={p.id}
               onClick={async () => {
                 const r = await logCoffee(ctx('coffee'), p);
-                logged(r, `${p.name} · ${(r.data as CoffeeData).caffeineMg} mg`, true, 'coffee');
+                logged(r, `${p.name}, ${(r.data as CoffeeData).caffeineMg} mg`, true, 'coffee');
               }}
             >
               {p.name}
             </Chip>
           ))}
         </div>
-        <p className="mt-2 text-xs text-slate-500">Different number of shots? Tap Details after logging.</p>
-      </Card>
+        <p className="mt-2.5 text-xs text-steel-dim">A different number of shots? Tap Details after logging.</p>
+      </Section>
 
-      <Card title="Stool" {...timeProps('stool')} aside={stools.length ? `${stools.length} today` : undefined}>
+      <Section title="Stool" lane="stool" {...timeProps('stool')} aside={stools.length ? `${stools.length} today` : undefined}>
         <button
           className="btn w-full"
           onClick={async () => {
@@ -316,25 +380,25 @@ export function Log() {
           Log stool now
         </button>
         {stools.length > 0 && (
-          <ul className="mt-3 space-y-1" data-testid="stool-list">
+          <ul className="mt-3 divide-y divide-dial-rule" data-testid="stool-list">
             {stools.map((r) => (
               <li key={r.id}>
-                <button className="flex w-full items-center justify-between rounded-xl bg-slate-800/60 px-3 py-2 text-sm" onClick={() => setEditing(r)}>
-                  <span className="tabular-nums text-slate-300">{clock(r.at)}</span>
-                  <span className={r.data.bristol ? 'text-slate-300' : 'text-amber-300'}>
-                    {r.data.bristol ? `Type ${r.data.bristol}${r.data.color ? `, ${r.data.color}` : ''} · edit` : 'Add details →'}
+                <button className="flex w-full items-center justify-between py-2.5 text-sm" onClick={() => setEditing(r)}>
+                  <span className="cond font-semibold text-steel">{clock(r.at)}</span>
+                  <span className={r.data.bristol ? 'text-ink' : 'font-semibold text-warn'}>
+                    {r.data.bristol ? `Type ${r.data.bristol}${r.data.color ? `, ${r.data.color}` : ''}` : 'Add details'}
                   </span>
                 </button>
               </li>
             ))}
           </ul>
         )}
-      </Card>
+      </Section>
 
-      <Card title="Supplements" {...timeProps('supplements')} aside={`${active.filter((s) => taken.has(s.id)).length} / ${active.length}`}>
+      <Section title="Supplements" lane="supplement" {...timeProps('supplements')} aside={`${active.filter((s) => taken.has(s.id)).length} of ${active.length}`}>
         {(['morning', 'night'] as const).map((when) => (
-          <div key={when} className="mb-2">
-            <p className="mb-1 text-xs uppercase tracking-wide text-slate-500">{when}</p>
+          <div key={when} className="mb-3 last:mb-0">
+            <p className="mb-1.5 text-xs text-steel-dim">{when === 'morning' ? 'Morning' : 'Night'}</p>
             <div className="flex flex-wrap gap-2">
               {active
                 .filter((s) => s.when === when)
@@ -356,9 +420,9 @@ export function Log() {
             </div>
           </div>
         ))}
-      </Card>
+      </Section>
 
-      <Card title="Alcohol and nicotine" {...timeProps('drinks')}>
+      <Section title="Alcohol and nicotine" lane="drink" {...timeProps('drinks')}>
         <div className="flex flex-wrap gap-2">
           {presets.alcohol.map((p) => (
             <Chip key={p.id} onClick={async () => logged(await logAlcohol(ctx('drinks'), p), `${p.name} logged`, false, 'drinks')}>
@@ -373,36 +437,38 @@ export function Log() {
             </Chip>
           ))}
         </div>
-      </Card>
+      </Section>
 
-      <div className="grid grid-cols-2 gap-3">
-        <button className="card text-left" onClick={() => setSheet('body')}>
-          <p className="font-semibold">Weight</p>
-          <p className="text-sm text-slate-400">
-            {lastBody ? describe(lastBody).detail : 'Log weight and fat %'}
-          </p>
+      <div className="section grid grid-cols-2 gap-3">
+        <button className="rounded-2xl border border-dial-rule p-3.5 text-left active:bg-dial-raised" onClick={() => setSheet('body')}>
+          <p className="title text-base">Weight</p>
+          <p className="meta">{lastBody ? describe(lastBody).detail : 'Weight and body fat'}</p>
         </button>
-        <button className="card text-left" onClick={() => setSheet('paste')}>
-          <p className="font-semibold">Meal / labs</p>
-          <p className="text-sm text-slate-400">Paste from Claude</p>
+        <button className="rounded-2xl border border-dial-rule p-3.5 text-left active:bg-dial-raised" onClick={() => setSheet('paste')}>
+          <p className="title flex items-center gap-2 text-base">
+            <GlyphIcon lane="meal" /> Meal / labs
+          </p>
+          <p className="meta">Paste from Claude</p>
         </button>
       </div>
 
-      <section className="card">
+      <section className="section" aria-label="Log for the day">
         <h2 className="h2">{day === today ? "Today's log" : 'Log'}</h2>
         {entries.length === 0 ? (
-          <p className="text-sm text-slate-500">Nothing logged yet.</p>
+          <p className="meta">Nothing logged yet. Tap a drink, the stool button or a supplement above.</p>
         ) : (
-          <ul data-testid="day-log">
+          <ul data-testid="day-log" className="divide-y divide-dial-rule">
             {entries.map((r) => {
               const d = describe(r);
+              const lane = LANE_OF[r.kind];
               return (
-                <li key={r.id} className="border-t border-slate-800 first:border-0">
-                  <button className="flex w-full items-baseline gap-3 py-2 text-left" onClick={() => setEditing(r)}>
-                    <span className="w-12 text-sm tabular-nums text-slate-400">{clock(r.at)}</span>
-                    <span className="flex-1">
+                <li key={r.id}>
+                  <button className="flex w-full items-baseline gap-3 py-2.5 text-left" onClick={() => setEditing(r)}>
+                    <span className="cond w-12 font-semibold text-steel">{clock(r.at)}</span>
+                    <span className="flex w-4 justify-center self-center">{lane ? <GlyphIcon lane={lane} /> : <span className="h-1.5 w-1.5 rounded-full bg-steel-dim" />}</span>
+                    <span className="min-w-0 flex-1">
                       {d.title}
-                      <span className="block truncate text-sm text-slate-400">{d.detail}</span>
+                      <span className="block truncate text-sm text-steel">{d.detail}</span>
                     </span>
                   </button>
                 </li>
@@ -419,7 +485,7 @@ export function Log() {
           onClose={() => setSheet(null)}
           onSave={async (kg, fat, w) => {
             setSheet(null);
-            logged(await logBody(ctx(undefined, w), kg, fat), w.kind === 'now' ? 'Weight logged' : `Weight logged · ${clock(nowAt(w))}`);
+            logged(await logBody(ctx(undefined, w), kg, fat), w.kind === 'now' ? 'Weight logged' : `Weight logged at ${clock(nowAt(w))}`);
           }}
         />
       )}

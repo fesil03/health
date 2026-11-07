@@ -72,7 +72,7 @@ function SyncSetup() {
         </button>
       ) : (
         <>
-          <p className="text-sm text-slate-300">
+          <p className="text-sm text-ink">
             {mode === 'new'
               ? 'Choose a passphrase. It locks your data before it leaves this device. Save it in your password manager: if it is lost, the cloud copy cannot be opened by anyone.'
               : 'This repo already holds locked data. Enter the passphrase you chose on your first device.'}
@@ -86,7 +86,7 @@ function SyncSetup() {
           </button>
         </>
       )}
-      {err && <p className="text-sm text-rose-300">{err}</p>}
+      {err && <p className="text-sm text-err">{err}</p>}
     </div>
   );
 }
@@ -112,28 +112,28 @@ export function Settings() {
 
   return (
     <>
-      <section className="card" data-testid="sync-settings">
+      <section className="section" data-testid="sync-settings">
         <h2 className="h2">Sync</h2>
         {sync.state === 'off' || sync.state === 'locked' ? (
           <SyncSetup />
         ) : (
           <div className="space-y-2 text-sm">
             <p>
-              Repo <span className="text-slate-300">{cfg?.owner}/{cfg?.repo}</span>
+              Repo <span className="text-ink">{cfg?.owner}/{cfg?.repo}</span>
             </p>
             <p>
-              Last sync <span className="text-slate-300">{ago(sync.lastSyncAt)}</span>
+              Last sync <span className="text-ink">{ago(sync.lastSyncAt)}</span>
               {sync.lastReport && (
-                <span className="text-slate-500">
+                <span className="text-steel-dim">
                   {' '}
                   (received {sync.lastReport.mergedRecords}, sent {sync.lastReport.pushedFiles} files)
                 </span>
               )}
             </p>
             <p>
-              Waiting to send <span className="text-slate-300">{Object.keys(pending ?? {}).length} months</span>
+              Waiting to send <span className="text-ink">{Object.keys(pending ?? {}).length} months</span>
             </p>
-            {sync.state === 'error' && <p className="text-rose-300">{sync.message}</p>}
+            {sync.state === 'error' && <p className="text-err">{sync.message}</p>}
             <div className="flex flex-wrap gap-2 pt-2">
               <button className="btn" disabled={sync.state === 'syncing'} onClick={() => void runSync()}>
                 Sync now
@@ -145,7 +145,7 @@ export function Settings() {
                 Disconnect
               </button>
             </div>
-            <p className="pt-1 text-xs text-slate-500">
+            <p className="pt-1 text-xs text-steel-dim">
               Lock forgets the key here (you'll re-enter the passphrase). Disconnect also forgets the token. Neither deletes data.
             </p>
           </div>
@@ -154,9 +154,9 @@ export function Settings() {
 
       <PresetEditors />
 
-      <section className="card">
+      <section className="section">
         <h2 className="h2">Backup</h2>
-        <p className="mb-3 text-sm text-slate-400">
+        <p className="mb-3 text-sm text-steel">
           An unlocked copy of everything, for your computer. It is not encrypted, so don't upload it anywhere.
         </p>
         <div className="flex flex-wrap gap-2">
@@ -171,12 +171,12 @@ export function Settings() {
             <input type="file" accept=".json,application/json" className="hidden" onChange={(e) => void onRestore(e.target.files?.[0])} />
           </label>
         </div>
-        {msg && <p className="mt-2 text-sm text-slate-300">{msg}</p>}
+        {msg && <p className="mt-2 text-sm text-ink">{msg}</p>}
       </section>
 
-      <section className="card text-sm text-slate-400">
+      <section className="section text-sm text-steel">
         <p>
-          This device <span className="font-mono text-slate-300">{deviceId}</span>
+          This device <span className="font-mono text-ink">{deviceId}</span>
         </p>
         <p>Version {__APP_VERSION__}</p>
       </section>

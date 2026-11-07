@@ -55,13 +55,13 @@ export function describe(r: HealthRecord): { title: string; detail: string } {
     }
     case 'body': {
       const d = r.data as BodyData;
-      return { title: 'Weight', detail: [d.kg != null && `${d.kg} kg`, d.fatPct != null && `${d.fatPct}% fat`].filter(Boolean).join(' · ') };
+      return { title: 'Weight', detail: [d.kg != null && `${d.kg} kg`, d.fatPct != null && `${d.fatPct}% fat`].filter(Boolean).join(', ') };
     }
     case 'supplement':
       return { title: (r.data as SupplementData).name, detail: 'Taken' };
     case 'meal': {
       const d = r.data as MealData;
-      return { title: `${d.meal[0].toUpperCase()}${d.meal.slice(1)}`, detail: [d.kcal != null && `${d.kcal} kcal`, d.items].filter(Boolean).join(' · ') };
+      return { title: `${d.meal[0].toUpperCase()}${d.meal.slice(1)}`, detail: [d.kcal != null && `${d.kcal} kcal`, d.items].filter(Boolean).join(', ') };
     }
     case 'lab': {
       const d = r.data as LabData;
@@ -81,7 +81,7 @@ function NumField({ label, value, onChange, unit }: { label: string; value: numb
     <label className="block">
       <span className="label">
         {label}
-        {unit && <span className="text-slate-500"> ({unit})</span>}
+        {unit && <span className="text-steel-dim"> ({unit})</span>}
       </span>
       <input className="input" inputMode="decimal" value={value ?? ''} onChange={(e) => onChange(numOrNull(e.target.value))} />
     </label>
@@ -101,7 +101,7 @@ export function StoolFields({ d, set }: { d: StoolData; set: (d: StoolData) => v
               role="radio"
               aria-checked={d.color === c}
               onClick={() => set({ ...d, color: c })}
-              className={`flex items-center gap-2 rounded-xl border px-3 py-1.5 text-sm ${d.color === c ? 'border-emerald-500' : 'border-slate-700'}`}
+              className={`flex items-center gap-2 rounded-xl border px-3 py-1.5 text-sm ${d.color === c ? 'border-lume' : 'border-dial-rule'}`}
             >
               <span className="h-3 w-3 rounded-full" style={{ background: COLOR_SWATCH[c] }} />
               {c}
@@ -126,7 +126,7 @@ export function StoolFields({ d, set }: { d: StoolData; set: (d: StoolData) => v
       </div>
       <NumField label="Duration" unit="min" value={d.durationMin} onChange={(durationMin) => set({ ...d, durationMin })} />
       {stoolNeedsDoctorNote(d) && (
-        <p className="rounded-xl bg-amber-500/15 p-3 text-sm text-amber-200" data-testid="doctor-note">
+        <p className="rounded-xl bg-warn/15 p-3 text-sm text-warn" data-testid="doctor-note">
           Blood, or black, red or pale stool can have harmless causes (food, iron), but see a doctor if it repeats or comes with pain.
         </p>
       )}
@@ -168,7 +168,7 @@ export function EditEntry({ rec, deviceId, onClose }: { rec: HealthRecord; devic
           <div>
             <span className="label">Espresso shots{data.estimated && ' (estimated)'}</span>
             <Stepper label="shots" min={1} value={data.shots} onChange={(shots) => setData({ ...data, shots })} />
-            <p className="mt-1 text-sm text-slate-400">{Math.round(data.shots * data.mgPerShot)} mg caffeine</p>
+            <p className="mt-1 text-sm text-steel">{Math.round(data.shots * data.mgPerShot)} mg caffeine</p>
           </div>
         )}
         {rec.kind === 'water' && <NumField label="Amount" unit="ml" value={data.ml} onChange={(ml) => setData({ ...data, ml: ml ?? 0 })} />}
@@ -216,12 +216,12 @@ export function EditEntry({ rec, deviceId, onClose }: { rec: HealthRecord; devic
           <table className="w-full text-sm">
             <tbody>
               {(data as LabData).markers.map((m) => (
-                <tr key={m.marker} className="border-t border-slate-800">
+                <tr key={m.marker} className="border-t border-dial-rule">
                   <td className="py-1.5">{m.marker}</td>
                   <td className="py-1.5 text-right tabular-nums">
                     {m.value} {m.unit}
                   </td>
-                  <td className="py-1.5 pl-2 text-right text-xs text-slate-500">
+                  <td className="py-1.5 pl-2 text-right text-xs text-steel-dim">
                     {m.refLow ?? ''}–{m.refHigh ?? ''}
                   </td>
                 </tr>
@@ -251,7 +251,7 @@ export function EditEntry({ rec, deviceId, onClose }: { rec: HealthRecord; devic
               Save
             </button>
           )}
-          <button className="btn-ghost text-rose-300" onClick={() => void remove()}>
+          <button className="btn-ghost text-err" onClick={() => void remove()}>
             Delete
           </button>
         </div>
