@@ -1,0 +1,5 @@
+﻿com.samsung.shealth.sleep,7013001,12
+sleep_score,sleep_duration,efficiency,com.samsung.health.sleep.start_time,com.samsung.health.sleep.time_offset,com.samsung.health.sleep.end_time,com.samsung.health.sleep.update_time,com.samsung.health.sleep.datauuid,
+88.0,593.0,88.0,2026-11-06 16:47:58.000,UTC+0800,2026-11-07 02:40:58.000,2026-11-07 02:51:00.000,sleep-a,
+,,,2026-11-05 10:00:00.000,UTC+0800,2026-11-05 10:05:00.000,2026-11-05 10:06:00.000,sleep-short,
+91.0,489.0,92.0,2026-11-04 16:58:02.000,UTC+0800,2026-11-05 01:07:02.000,2026-11-05 01:10:00.000,sleep-b,

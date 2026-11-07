@@ -1,0 +1,4 @@
+com.samsung.shealth.tracker.heart_rate,7013001,3
+tag_id,com.samsung.health.heart_rate.start_time,com.samsung.health.heart_rate.update_time,com.samsung.health.heart_rate.max,com.samsung.health.heart_rate.min,com.samsung.health.heart_rate.time_offset,com.samsung.health.heart_rate.end_time,com.samsung.health.heart_rate.datauuid,com.samsung.health.heart_rate.heart_rate
+21313,2026-11-06 18:00:00.000,2026-11-06 18:59:00.000,70.0,52.0,UTC+0800,2026-11-06 18:59:00.000,hr-1,56.0
+21313,2026-11-06 19:00:00.000,2026-11-06 19:59:00.000,0.0,0.0,UTC+0800,2026-11-06 19:59:00.000,hr-0,0.0

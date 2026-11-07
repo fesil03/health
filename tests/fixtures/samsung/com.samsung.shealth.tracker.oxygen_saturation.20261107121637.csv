@@ -1,0 +1,3 @@
+com.samsung.shealth.tracker.oxygen_saturation,7013001,5
+com.samsung.health.oxygen_saturation.start_time,com.samsung.health.oxygen_saturation.update_time,com.samsung.health.oxygen_saturation.min,com.samsung.health.oxygen_saturation.spo2,com.samsung.health.oxygen_saturation.time_offset,com.samsung.health.oxygen_saturation.end_time,com.samsung.health.oxygen_saturation.datauuid
+2026-11-06 16:47:58.000,2026-11-07 02:51:25.000,94.0,97.0,UTC+0800,2026-11-07 02:51:25.000,o-1
