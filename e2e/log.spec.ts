@@ -140,3 +140,22 @@ test('a coffee logged on the phone reaches the computer', async ({ browser }) =>
   await expect(log(mac)).toContainText('128 mg (est.)');
   expect(outside).toEqual([]);
 });
+
+test('log time: minutes ago, picked time, then back to now', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-11-08T10:30:00+08:00'));
+  await page.goto('./');
+  const when = page.getByRole('region', { name: 'When' });
+
+  await when.getByRole('button', { name: '1 h ago' }).click();
+  await page.getByRole('button', { name: 'Coconut latte' }).click();
+  await expect(toast(page)).toContainText('09:30');
+  await expect(when.getByRole('button', { name: 'Now' })).toHaveClass(/emerald/); // reset
+
+  await when.getByRole('button', { name: 'Pick time' }).click();
+  await page.getByLabel('Log time').fill('08:05');
+  await page.getByRole('button', { name: 'Double espresso (home)' }).click();
+
+  await page.getByRole('button', { name: '+ Glass 250 ml' }).click(); // now
+
+  await expect(log(page).locator('li span.w-12')).toHaveText(['08:05', '09:30', '10:30']);
+});

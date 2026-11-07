@@ -17,7 +17,7 @@ import type { BodyData, CoffeeData, HealthRecord, NicotineForm, StoolData, Water
 import { parsePaste, pasteToRecords, type PasteResult } from '../lib/paste';
 import { loadPresets, type SupplementItem } from '../lib/presets';
 import { scheduleSync } from '../lib/syncClient';
-import { addDays, nowNaive, todayLocal } from '../lib/time';
+import { addDays, nowNaive, resolveLogTime, todayLocal, type LogWhen } from '../lib/time';
 import { describe, EditEntry } from './EditEntry';
 import { clock, shortDay } from './format';
 import { Chip, Sheet, useDeviceId, useToast } from './kit';
@@ -124,6 +124,40 @@ function PasteSheet({ onClose, deviceId, nowAt }: { onClose: () => void; deviceI
   );
 }
 
+const AGO = [15, 30, 60, 120];
+
+function TimeRow({ when, setWhen }: { when: LogWhen; setWhen: (w: LogWhen) => void }) {
+  const [picking, setPicking] = useState(false);
+  const pickVal = when.kind === 'at' ? when.hhmm : nowNaive().slice(11, 16);
+  return (
+    <section className="card py-3" aria-label="When">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="mr-1 text-sm text-slate-400">When</span>
+        <Chip active={when.kind === 'now'} onClick={() => { setPicking(false); setWhen({ kind: 'now' }); }}>
+          Now
+        </Chip>
+        {AGO.map((m) => (
+          <Chip key={m} active={when.kind === 'ago' && when.min === m} onClick={() => { setPicking(false); setWhen({ kind: 'ago', min: m }); }}>
+            {m < 60 ? `${m} min ago` : `${m / 60} h ago`}
+          </Chip>
+        ))}
+        <Chip active={when.kind === 'at'} onClick={() => { setPicking(true); setWhen({ kind: 'at', hhmm: pickVal }); }}>
+          {when.kind === 'at' ? `At ${when.hhmm}` : 'Pick time'}
+        </Chip>
+      </div>
+      {picking && when.kind === 'at' && (
+        <input
+          aria-label="Log time"
+          type="time"
+          className="input mt-2"
+          value={when.hhmm}
+          onChange={(e) => e.target.value && setWhen({ kind: 'at', hhmm: e.target.value })}
+        />
+      )}
+    </section>
+  );
+}
+
 export function Log() {
   const deviceId = useDeviceId();
   const toast = useToast();
@@ -131,6 +165,7 @@ export function Log() {
   const [day, setDay] = useState(today);
   const [editing, setEditing] = useState<HealthRecord | null>(null);
   const [sheet, setSheet] = useState<'body' | 'paste' | null>(null);
+  const [when, setWhen] = useState<LogWhen>({ kind: 'now' });
   const presets = useLiveQuery(() => loadPresets(db));
   const entries = useLiveQuery(() => dayLog(db, day), [day]) ?? [];
   const lastBody = useLiveQuery(async () => {
@@ -138,14 +173,16 @@ export function Log() {
     return all.sort((a, b) => b.at.localeCompare(a.at))[0];
   });
 
-  /** Log at "now", or at the current clock time on the day being viewed. */
-  const nowAt = () => (day === today ? nowNaive() : `${day}T${nowNaive().slice(11)}`);
+  /** Time for the next quick log: the chosen "when", on the day being viewed. */
+  const nowAt = () => resolveLogTime(day, nowNaive(), when);
   const ctx = (): Ctx => ({ db, deviceId, at: nowAt() });
 
   async function logged(rec: HealthRecord, text: string, details = false) {
     scheduleSync();
+    const stamped = when.kind !== 'now' || day !== today;
+    setWhen({ kind: 'now' }); // back to "now" so the next log isn't stamped in the past by accident
     toast({
-      text,
+      text: stamped ? `${text} · ${clock(rec.at)}` : text,
       actions: [
         ...(details ? [{ label: 'Details', run: () => setEditing(rec) }] : []),
         {
@@ -186,6 +223,8 @@ export function Log() {
           ›
         </button>
       </div>
+
+      <TimeRow when={when} setWhen={setWhen} />
 
       <Card title="Water" aside={<span data-testid="water-total">{`${waterMl.toLocaleString()} / ${target.toLocaleString()} ml`}</span>}>
         <div className="relative mb-3 h-3 overflow-hidden rounded-full bg-slate-800">
@@ -250,6 +289,7 @@ export function Log() {
                     label={`${s.name}${taken.has(s.id) ? ' (taken)' : ''}`}
                     onClick={async () => {
                       await setSupplementTaken(ctx(), s, !taken.has(s.id));
+                      setWhen({ kind: 'now' });
                       scheduleSync();
                     }}
                   >
