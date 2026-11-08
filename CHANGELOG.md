@@ -2,8 +2,7 @@
 
 ## v0.3.1 — Updates reach the iPhone sooner (2026-11-08)
 
-- The app now checks for a new version whenever it comes back on screen (and hourly while open).
-  iPhone home-screen apps are usually resumed rather than relaunched, so they could stay on an
+- The app now checks for a new version whenever it comes back on screen. iPhone home-screen apps are usually resumed rather than relaunched, so they could stay on an
   old version for a long time — v0.3.0's watch data didn't appear there until it updated.
 
 ## v0.3.0 — Watch bridge support (2026-11-08)
