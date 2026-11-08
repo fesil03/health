@@ -152,3 +152,30 @@ export function pasteToRecords(p: PasteResult, deviceId: string, nowAt: string, 
   }
   return out;
 }
+
+export interface PastePlanItem {
+  rec: HealthRecord;
+  /** already in the app (and not deleted): skipped, so edits made in the app are kept */
+  exists: boolean;
+}
+
+/** What a paste would add: every block with a flag for ones already logged. */
+export async function planPaste(
+  db: { records: { bulkGet(ids: string[]): Promise<(HealthRecord | undefined)[]> } },
+  p: PasteResult,
+  deviceId: string,
+  nowAt: string,
+  now = Date.now()
+): Promise<PastePlanItem[]> {
+  const recs = pasteToRecords(p, deviceId, nowAt, now);
+  const existing = await db.records.bulkGet(recs.map((r) => r.id));
+  return recs.map((rec, i) => ({ rec, exists: !!existing[i] && !existing[i]!.deleted }));
+}
+
+/** "2 meals and 1 lab result set" */
+export function describeCounts(meals: number, labs: number): string {
+  const parts = [];
+  if (meals) parts.push(`${meals} ${meals === 1 ? 'meal' : 'meals'}`);
+  if (labs) parts.push(`${labs} lab result ${labs === 1 ? 'set' : 'sets'}`);
+  return parts.join(' and ');
+}
