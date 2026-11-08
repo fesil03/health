@@ -209,3 +209,43 @@ describe('log time picker', async () => {
     expect(resolveLogTime('2026-11-05', now, { kind: 'at', hhmm: '21:00' })).toBe('2026-11-05T21:00:00');
   });
 });
+
+describe('batch paste', async () => {
+  const { planPaste, describeCounts } = await import('../src/lib/paste');
+  const batch = `#meal v1
+time: 2026-11-07 19:30
+meal: dinner
+items: noodles
+kcal: 650
+
+#meal v1
+time: 2026-11-08 08:40
+meal: breakfast
+items: eggs; toast
+kcal: 380`;
+
+  it('marks meals already logged and skips them', async () => {
+    const db = freshDb();
+    const first = await planPaste(db, parsePaste(batch), 'phone', '2026-11-08T13:00:00', 1);
+    expect(first.map((i) => i.exists)).toEqual([false, false]);
+    expect(first.map((i) => i.rec.day)).toEqual(['2026-11-07', '2026-11-08']);
+    await db.saveLocal(first.map((i) => i.rec));
+
+    const more = `${batch}\n\n#meal v1\ntime: 2026-11-08 13:05\nmeal: lunch\nitems: rice; tofu\nkcal: 700`;
+    const second = await planPaste(db, parsePaste(more), 'phone', '2026-11-08T14:00:00', 2);
+    expect(second.map((i) => i.exists)).toEqual([true, true, false]);
+  });
+
+  it('a meal deleted in the app counts as new again', async () => {
+    const db = freshDb();
+    const [item] = await planPaste(db, parsePaste(batch), 'phone', '2026-11-08T13:00:00', 1);
+    await db.saveLocal([{ ...item.rec, deleted: true }]);
+    const again = await planPaste(db, parsePaste(batch), 'phone', '2026-11-08T13:00:00', 2);
+    expect(again[0].exists).toBe(false);
+  });
+
+  it('describes counts in plain words', () => {
+    expect(describeCounts(1, 0)).toBe('1 meal');
+    expect(describeCounts(2, 1)).toBe('2 meals and 1 lab result set');
+  });
+});

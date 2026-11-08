@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.2.5 — Batch meal paste (2026-11-08)
+
+- Paste several #meal blocks at once: each meal is filed under its own date and time, and the
+  preview shows the day (Today, Yesterday, or the date) for each one.
+- Meals already in the app are marked "Already logged" and skipped, so edits made in the app
+  are kept. The button says how many are new ("Save 2 new meals"), or "Nothing new to save".
+- Confirmations now appear at the top of the screen, so they no longer cover sheets or the tab bar.
+
 ## v0.2.4 — New look (2026-11-08)
 
 - New palette: deep blue, aged-lume cream for what you tap,

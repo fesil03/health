@@ -70,8 +70,8 @@ date: 2026-03-14
 lab: Fleury
 marker | value | unit | ref_low | ref_high
 Vitamin D | 32 | ng/mL | 30 | 100`);
-  await expect(page.getByTestId('paste-preview')).toContainText('lunch: rice; eggplant');
-  await expect(page.getByTestId('paste-preview')).toContainText('Labs 2026-03-14: 1 markers');
+  await expect(page.getByTestId('paste-preview')).toContainText('Lunch: rice; eggplant');
+  await expect(page.getByTestId('paste-preview')).toContainText('Labs: 1 markers');
   await page.getByRole('button', { name: 'Save' }).click();
   await expect(log(page)).toContainText('Lunch');
   await expect(log(page)).not.toContainText('Labs');
@@ -221,4 +221,48 @@ test('top of the Log screen: summary by default, one tap to switch, remembered',
   await expect(page.getByTestId('top-totals')).toBeVisible();
   await page.getByRole('radio', { name: 'Summary' }).click();
   await expect(page.getByTestId('top-summary')).toBeVisible();
+});
+
+test('batch paste: several meals on their own days, repeats skipped', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-11-08T14:30:00+08:00'));
+  await page.goto('./');
+  const meals = (extra = '') => `#meal v1
+time: 2026-11-07 19:30
+meal: dinner
+items: noodles
+kcal: 650
+
+#meal v1
+time: 2026-11-08 08:40
+meal: breakfast
+items: eggs; toast
+kcal: 380
+${extra}`;
+
+  await page.getByRole('button', { name: /Meal \/ labs/ }).click();
+  await page.getByTestId('paste-box').fill(meals());
+  const preview = page.getByTestId('paste-preview');
+  await expect(preview).toContainText('Yesterday');
+  await expect(preview).toContainText('Today');
+  await page.getByRole('button', { name: 'Save 2 new meals' }).click();
+  await expect(toast(page)).toContainText('Saved 2 meals');
+  await expect(log(page)).toContainText('Breakfast');
+  await expect(log(page)).not.toContainText('Dinner'); // filed under yesterday
+
+  // Next time: paste the same two plus lunch
+  await page.getByRole('button', { name: /Meal \/ labs/ }).click();
+  await page.getByTestId('paste-box').fill(meals('\n#meal v1\ntime: 2026-11-08 13:05\nmeal: lunch\nitems: rice; tofu\nkcal: 700'));
+  await expect(preview.getByText('Already logged')).toHaveCount(2);
+  await page.getByRole('button', { name: 'Save 1 new meal' }).click();
+  await expect(log(page).getByRole('button', { name: /Breakfast/ })).toHaveCount(1);
+  await expect(log(page)).toContainText('Lunch');
+
+  // Same paste a third time: nothing new
+  await page.getByRole('button', { name: /Meal \/ labs/ }).click();
+  await page.getByTestId('paste-box').fill(meals());
+  await expect(page.getByRole('button', { name: 'Nothing new to save' })).toBeDisabled();
+  await page.getByRole('button', { name: 'Close' }).click();
+
+  await page.getByRole('button', { name: 'Previous day' }).click();
+  await expect(log(page)).toContainText('Dinner');
 });

@@ -46,7 +46,7 @@ export function ToastHost({ children }: { children: ReactNode }) {
     <ToastCtx.Provider value={show}>
       {children}
       {msg && (
-        <div className="fixed inset-x-0 bottom-20 z-40 flex justify-center px-4" key={msg.key}>
+        <div className="fixed inset-x-0 top-[calc(3.75rem+env(safe-area-inset-top))] z-40 flex justify-center px-4" key={msg.key}>
           <div role="status" className="flex max-w-md items-center gap-4 rounded-2xl bg-ink px-4 py-3 text-sm text-dial-deep shadow-[0_8px_30px_rgba(5,10,20,0.45)]">
             <span className="flex-1">{msg.text}</span>
             {msg.actions?.map((a) => (
