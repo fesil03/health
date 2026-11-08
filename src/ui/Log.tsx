@@ -14,7 +14,7 @@ import {
   type Ctx
 } from '../lib/log';
 import type { BodyData, CoffeeData, HealthRecord, NicotineForm, SleepData, StoolData, WaterData } from '../lib/model';
-import { parsePaste, pasteToRecords, type PasteResult } from '../lib/paste';
+import { describeCounts, parsePaste, planPaste, type PastePlanItem, type PasteResult } from '../lib/paste';
 import { loadPresets, type SupplementItem } from '../lib/presets';
 import { scheduleSync } from '../lib/syncClient';
 import { addDays, nowNaive, resolveLogTime, todayLocal, type LogWhen } from '../lib/time';
@@ -151,39 +151,45 @@ function BodySheet({ onSave, onClose, last }: { onSave: (kg: number | null, fat:
   );
 }
 
-function PasteSheet({ onClose, deviceId, nowAt }: { onClose: () => void; deviceId: string; nowAt: () => string }) {
+function PasteSheet({ onClose, deviceId, nowAt, today }: { onClose: () => void; deviceId: string; nowAt: () => string; today: string }) {
   const [text, setText] = useState('');
   const [parsed, setParsed] = useState<PasteResult | null>(null);
+  const [plan, setPlan] = useState<PastePlanItem[]>([]);
   const toast = useToast();
-  const read = (t: string) => {
+  const read = async (t: string) => {
     setText(t);
-    setParsed(t.trim() ? parsePaste(t) : null);
+    const p = t.trim() ? parsePaste(t) : null;
+    setParsed(p);
+    setPlan(p ? await planPaste(db, p, deviceId, nowAt()) : []);
   };
   async function fromClipboard() {
     try {
-      read(await navigator.clipboard.readText());
+      await read(await navigator.clipboard.readText());
     } catch {
-      toast({ text: 'Clipboard not available here: long-press the box and paste.' });
+      toast({ text: 'Clipboard not available here. Long-press the box and choose Paste.' });
     }
   }
+  const fresh = plan.filter((i) => !i.exists);
+  const freshMeals = fresh.filter((i) => i.rec.kind === 'meal').length;
+  const freshLabs = fresh.filter((i) => i.rec.kind === 'lab').length;
   async function save() {
-    if (!parsed) return;
-    const recs = pasteToRecords(parsed, deviceId, nowAt());
-    await db.saveLocal(recs);
+    await db.saveLocal(fresh.map((i) => i.rec));
     scheduleSync();
-    toast({ text: `Saved ${parsed.meals.length ? `${parsed.meals.length} meal(s)` : ''}${parsed.meals.length && parsed.labs.length ? ' and ' : ''}${parsed.labs.length ? `${parsed.labs.length} lab result set(s)` : ''}` });
+    toast({ text: `Saved ${describeCounts(freshMeals, freshLabs)}` });
     onClose();
   }
-  const ok = parsed && (parsed.meals.length || parsed.labs.length);
+  const dayLabel = (d: string) => (d === today ? 'Today' : d === addDays(today, -1) ? 'Yesterday' : shortDay(d));
   return (
     <Sheet title="Paste from Claude" onClose={onClose}>
-      <p className="mb-2 text-sm text-steel">Paste a #meal or #labs block from the chat.</p>
+      <p className="mb-2 text-sm text-steel">
+        Paste one or more #meal or #labs blocks. Each meal keeps its own date and time, and meals already in the app are skipped.
+      </p>
       <textarea
         data-testid="paste-box"
         className="input font-mono text-xs"
-        rows={8}
+        rows={7}
         value={text}
-        onChange={(e) => read(e.target.value)}
+        onChange={(e) => void read(e.target.value)}
         placeholder={'#meal v1\ntime: …\nitems: …'}
       />
       <div className="mt-2 flex gap-2">
@@ -192,27 +198,38 @@ function PasteSheet({ onClose, deviceId, nowAt }: { onClose: () => void; deviceI
         </button>
       </div>
       {parsed && (
-        <div className="mt-3 space-y-1 text-sm" data-testid="paste-preview">
-          {parsed.meals.map((m, i) => (
-            <p key={i}>
-              <span className="text-steel">{m.at ? `${m.at.slice(5, 10)} ${clock(m.at)}` : 'Now'} </span>
-              {m.data.meal}: {m.data.items} {m.data.kcal != null && <span className="text-steel">({m.data.kcal} kcal)</span>}
-            </p>
-          ))}
-          {parsed.labs.map((l, i) => (
-            <p key={i}>
-              Labs {l.date}: {l.data.markers.length} markers ({l.data.lab})
-            </p>
-          ))}
+        <ul className="mt-3 divide-y divide-dial-rule text-sm" data-testid="paste-preview">
+          {plan.map(({ rec, exists }) => {
+            const m = rec.kind === 'meal' ? (rec.data as PasteResult['meals'][number]['data']) : null;
+            return (
+              <li key={rec.id} className={`flex items-baseline gap-3 py-2 ${exists ? 'opacity-50' : ''}`}>
+                <span className="w-20 shrink-0 text-steel">
+                  <span className="block text-xs">{dayLabel(rec.day)}</span>
+                  <span className="cond font-semibold text-ink">{clock(rec.at)}</span>
+                </span>
+                <span className="min-w-0 flex-1">
+                  {m ? (
+                    <>
+                      {m.meal[0].toUpperCase() + m.meal.slice(1)}: {m.items}
+                      {m.kcal != null && <span className="text-steel">, {m.kcal} kcal</span>}
+                    </>
+                  ) : (
+                    <>Labs: {(rec.data as { markers: unknown[] }).markers.length} markers</>
+                  )}
+                  {exists && <span className="block text-xs text-steel">Already logged</span>}
+                </span>
+              </li>
+            );
+          })}
           {parsed.errors.map((e, i) => (
-            <p key={i} className="text-err">
+            <li key={i} className="py-2 text-err">
               {e}
-            </p>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
-      <button className="btn mt-4 w-full" disabled={!ok} onClick={() => void save()}>
-        Save
+      <button className="btn mt-4 w-full" disabled={!fresh.length} onClick={() => void save()}>
+        {!parsed || !plan.length ? 'Save' : fresh.length ? `Save ${describeCounts(freshMeals, freshLabs).replace(/^(\d+) /, '$1 new ')}` : 'Nothing new to save'}
       </button>
     </Sheet>
   );
@@ -421,7 +438,7 @@ export function Log() {
           <p className="title flex items-center gap-2 text-base">
             <GlyphIcon lane="meal" /> Meal / labs
           </p>
-          <p className="meta">Paste from Claude</p>
+          <p className="meta">Paste one or more from Claude</p>
         </button>
       </div>
 
@@ -462,7 +479,7 @@ export function Log() {
           }}
         />
       )}
-      {sheet === 'paste' && <PasteSheet onClose={() => setSheet(null)} deviceId={deviceId} nowAt={() => nowAt()} />}
+      {sheet === 'paste' && <PasteSheet onClose={() => setSheet(null)} deviceId={deviceId} nowAt={() => nowAt()} today={today} />}
     </>
   );
 }
