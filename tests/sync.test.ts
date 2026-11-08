@@ -153,3 +153,28 @@ describe('GitHubStore', () => {
     expect(trees.map((c) => (c.body as { base_tree: string }).base_tree)).toEqual(['tree1', 'tree2']);
   });
 });
+
+describe('watch bridge files', () => {
+  it('pulls day files written by the bridge and never pushes its records back', async () => {
+    const store = new MemoryStore();
+    const { key } = await unlock(store, 'pw', FAST);
+    const bridge = 'watch-1a2b3c';
+    const path = `devices/${bridge}/2026-11-08.enc`;
+    const night = rec('samsung:sleep:n1', bridge, 10, {
+      kind: 'sleep',
+      day: '2026-11-08',
+      at: '2026-11-07T23:45:00',
+      source: 'samsung',
+      data: { end: '2026-11-08T07:15:00', score: 82, durationMin: 450, efficiency: null }
+    });
+    const payload = { v: 1, deviceId: bridge, month: '2026-11', day: '2026-11-08', records: [night] };
+    await store.write([{ path, text: await sealJson(key, payload, path) }], 'bridge');
+
+    const phone = new HealthDB(`w-${Math.random()}`);
+    const report = await sync(phone, store, key, 'phone001');
+    expect(report.pulledFiles).toBe(1);
+    expect(await phone.records.get('samsung:sleep:n1')).toMatchObject({ deviceId: bridge, data: { score: 82 } });
+    expect(report.pushedFiles).toBe(0);
+    expect((await store.list()).some((f) => f.path.startsWith('devices/phone001/'))).toBe(false);
+  });
+});

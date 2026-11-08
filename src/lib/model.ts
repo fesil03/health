@@ -8,7 +8,9 @@ export type SamsungKind =
   | 'stress_hourly'
   | 'steps_daily'
   | 'spo2'
-  | 'exercise';
+  | 'exercise'
+  | 'energy' // from the watch bridge
+  | 'skin_temp'; // from the watch bridge
 
 export type LogKind = 'stool' | 'coffee' | 'alcohol' | 'nicotine' | 'body' | 'supplement' | 'meal' | 'lab' | 'note';
 
@@ -43,6 +45,7 @@ export interface HourlyData {
   avg: number;
   min: number | null;
   max: number | null;
+  n?: number; // readings in the hour (watch bridge)
 }
 export interface StepsData {
   steps: number;
@@ -60,6 +63,21 @@ export interface ExerciseData {
   durationMin: number;
   kcal: number | null;
   meanHr: number | null;
+  // Extra fields the watch bridge adds when Samsung Health has them
+  maxHr?: number | null;
+  distanceM?: number | null;
+  vo2Max?: number | null;
+  title?: string;
+}
+/** Samsung's daily energy score, 0-100. */
+export interface EnergyData {
+  score: number;
+}
+export interface SkinTempData {
+  end: string;
+  avg: number;
+  min: number | null;
+  max: number | null;
 }
 export interface WaterData {
   ml: number;

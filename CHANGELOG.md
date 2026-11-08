@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.3.0 — Watch bridge support (2026-11-08)
+
+- Reads the day files written by the Vitals Bridge Android app (`devices/watch-…/YYYY-MM-DD.enc`)
+  alongside the usual month files, so Galaxy watch data arrives without exports.
+- New kinds from the bridge: energy score and skin temperature. Workouts can carry max heart
+  rate, distance and VO2 max; hourly heart rate carries the number of readings.
+- Home shows when watch data last arrived.
+
 ## v0.2.5 — Batch meal paste (2026-11-08)
 
 - Paste several #meal blocks at once: each meal is filed under its own date and time, and the
