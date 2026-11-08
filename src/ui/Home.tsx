@@ -19,6 +19,17 @@ export function Home({ go }: { go: (t: Tab) => void }) {
       })
     )
   );
+  // The watch bridge is its own device ("watch-xxxxxx"); show when its data last arrived.
+  const watchAt = useLiveQuery(async () => {
+    let last = 0;
+    await db.records
+      .where('deviceId')
+      .startsWith('watch-')
+      .each((r) => {
+        if (r.updatedAt > last) last = r.updatedAt;
+      });
+    return last || null;
+  });
   const nights = useLiveQuery(async () => {
     const all = (await db.records.where('kind').equals('sleep').toArray()).filter((r) => !r.deleted);
     // Main sleep per wake-up day = the longest one
@@ -46,6 +57,11 @@ export function Home({ go }: { go: (t: Tab) => void }) {
               {(sync.state === 'idle' || sync.state === 'syncing') && `Last synced ${ago(sync.lastSyncAt)}`}
               {sync.state === 'error' && <span className="text-err">{sync.message}</span>}
             </p>
+            {!!watchAt && (
+              <p className="text-sm text-steel" data-testid="watch-status">
+                Watch data last arrived {ago(watchAt)}
+              </p>
+            )}
           </div>
           {sync.state === 'off' || sync.state === 'locked' ? (
             <button className="btn-ghost" onClick={() => go('settings')}>

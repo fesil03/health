@@ -5,7 +5,8 @@ import { monthOf } from '../time';
 import type { RemoteStore } from './store';
 
 export const META_PATH = 'meta.json';
-const FILE_RE = /^devices\/([A-Za-z0-9_-]+)\/(\d{4}-\d{2})\.enc$/;
+// Month files from the apps; day files (YYYY-MM-DD) from the watch bridge.
+const FILE_RE = /^devices\/([A-Za-z0-9_-]+)\/(\d{4}-\d{2}(?:-\d{2})?)\.enc$/;
 export const devicePath = (deviceId: string, month: string) => `devices/${deviceId}/${month}.enc`;
 
 interface Meta {

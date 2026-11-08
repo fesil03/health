@@ -50,6 +50,8 @@ export const KIND_LABELS: Record<Exclude<Kind, 'preset'>, string> = {
   steps_daily: 'Steps (daily)',
   spo2: 'Blood oxygen',
   exercise: 'Workouts',
+  energy: 'Energy score',
+  skin_temp: 'Skin temperature',
   water: 'Water',
   stool: 'Stool',
   coffee: 'Coffee',
