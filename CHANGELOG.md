@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.4.0 — Several doses of a supplement a day (2026-11-09)
+
+- Each tap on a supplement logs a dose with its own time, so L-theanine with every coffee is
+  three taps, not one tick. The chip shows ✓ for one dose and ×2, ×3… for more; Undo in the
+  toast removes the dose just logged, and any dose can be edited or deleted from the day log.
+- Doses logged by older versions (one fixed record per supplement per day) still count as one.
+- The "x of 6" count and the summary still count supplements taken at least once.
+
 ## v0.3.1 — Updates reach the iPhone sooner (2026-11-08)
 
 - The app now checks for a new version whenever it comes back on screen. iPhone home-screen apps are usually resumed rather than relaunched, so they could stay on an
