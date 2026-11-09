@@ -14,6 +14,7 @@ import type {
   StoolColor,
   StoolData,
   SupplementData,
+  SymptomData,
   WaterData
 } from '../lib/model';
 import { alcoholGrams } from '../lib/presets';
@@ -31,6 +32,7 @@ const COLOR_SWATCH: Record<StoolColor, string> = {
   pale: '#d6d3d1'
 };
 const EASE = ['', 'Easy', 'Normal', 'Some straining', 'Hard straining'];
+export const SEVERITY = ['', 'Mild', 'Moderate', 'Strong'] as const;
 
 export function describe(r: HealthRecord): { title: string; detail: string } {
   switch (r.kind) {
@@ -68,6 +70,10 @@ export function describe(r: HealthRecord): { title: string; detail: string } {
     }
     case 'note':
       return { title: 'Note', detail: (r.data as NoteData).text };
+    case 'symptom': {
+      const d = r.data as SymptomData;
+      return { title: d.name, detail: [d.severity && SEVERITY[d.severity], d.note].filter(Boolean).join(', ') || 'Tap to add how strong' };
+    }
     default:
       return { title: r.kind, detail: '' };
   }
@@ -223,7 +229,19 @@ export function EditEntry({ rec, deviceId, onClose }: { rec: HealthRecord; devic
             </tbody>
           </table>
         )}
-        {(rec.kind === 'note' || rec.kind === 'stool' || rec.kind === 'meal') && (
+        {rec.kind === 'symptom' && (
+          <div>
+            <span className="label">How strong</span>
+            <div className="flex gap-2" role="group" aria-label="How strong">
+              {([1, 2, 3] as const).map((n) => (
+                <Chip key={n} active={data.severity === n} onClick={() => setData({ ...data, severity: data.severity === n ? null : n })}>
+                  {SEVERITY[n]}
+                </Chip>
+              ))}
+            </div>
+          </div>
+        )}
+        {(rec.kind === 'note' || rec.kind === 'stool' || rec.kind === 'meal' || rec.kind === 'symptom') && (
           <label className="block">
             <span className="label">{rec.kind === 'note' ? 'Note' : 'Note (optional)'}</span>
             <input

@@ -4,6 +4,7 @@ import type { SleepData } from '../lib/model';
 import { KIND_LABELS } from '../lib/samsung/importer';
 import { runSync } from '../lib/syncClient';
 import { useSyncStatus, type Tab } from './App';
+import { AskClaude } from './AskClaude';
 import { ago, clock, hm, range, shortDay } from './format';
 
 const KINDS = Object.keys(KIND_LABELS) as (keyof typeof KIND_LABELS)[];
@@ -74,6 +75,8 @@ export function Home({ go }: { go: (t: Tab) => void }) {
           )}
         </div>
       </section>
+
+      {!empty && <AskClaude />}
 
       {empty ? (
         <section className="section text-center">

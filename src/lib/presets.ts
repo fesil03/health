@@ -34,10 +34,16 @@ export interface WaterSettings {
   bottleMl: number;
 }
 
+export interface SymptomItem {
+  id: string;
+  name: string;
+}
+
 export interface Presets {
   coffee: CoffeePreset[];
   alcohol: AlcoholPreset[];
   supplements: SupplementItem[];
+  symptoms: SymptomItem[];
   water: WaterSettings;
 }
 
@@ -66,6 +72,18 @@ export const DEFAULT_PRESETS: Presets = {
     { id: 'calcium-d3', name: 'Calcium + D3', when: 'morning', active: true },
     { id: 'folic-acid', name: 'Folic acid', when: 'morning', active: true },
     { id: 'vitamin-d3', name: 'Vitamin D3', when: 'morning', active: true }
+  ],
+  symptoms: [
+    { id: 'burping', name: 'Burping' },
+    { id: 'bloating', name: 'Bloating' },
+    { id: 'heartburn', name: 'Heartburn' },
+    { id: 'stomach-ache', name: 'Stomach ache' },
+    { id: 'nausea', name: 'Nausea' },
+    { id: 'headache', name: 'Headache' },
+    { id: 'low-energy', name: 'Low energy' },
+    { id: 'brain-fog', name: 'Brain fog' },
+    { id: 'low-mood', name: 'Low mood' },
+    { id: 'anxious', name: 'Anxious' }
   ],
   water: { targetMl: 2000, exerciseTargetMl: 2500, glassMl: 250, bottleMl: 350 }
 };
