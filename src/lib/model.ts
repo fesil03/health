@@ -12,7 +12,7 @@ export type SamsungKind =
   | 'energy' // from the watch bridge
   | 'skin_temp'; // from the watch bridge
 
-export type LogKind = 'stool' | 'coffee' | 'alcohol' | 'nicotine' | 'body' | 'supplement' | 'meal' | 'lab' | 'note';
+export type LogKind = 'stool' | 'coffee' | 'alcohol' | 'nicotine' | 'body' | 'supplement' | 'meal' | 'lab' | 'note' | 'symptom';
 
 /** `water` comes from both Samsung and the app's taps. `preset` holds synced preset lists. */
 export type Kind = SamsungKind | LogKind | 'water' | 'preset';
@@ -129,6 +129,15 @@ export interface BodyData {
 export interface SupplementData {
   supplementId: string;
   name: string;
+}
+
+/** 1 mild, 2 moderate, 3 strong. */
+export type Severity = 1 | 2 | 3;
+export interface SymptomData {
+  symptomId: string;
+  name: string;
+  severity: Severity | null;
+  note?: string;
 }
 
 export interface MealData {

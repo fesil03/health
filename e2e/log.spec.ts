@@ -271,3 +271,32 @@ ${extra}`;
   await page.getByRole('button', { name: 'Previous day' }).click();
   await expect(log(page)).toContainText('Dinner');
 });
+
+test('symptoms: log, add strength and note, see them in the summary and in Copy for Claude', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.clock.setFixedTime(new Date('2026-11-09T13:20:00+08:00'));
+  await page.goto('./');
+
+  await page.getByRole('button', { name: 'Double espresso (home)' }).click();
+  const symptoms = page.getByRole('region', { name: 'Symptoms' });
+  await symptoms.getByRole('button', { name: 'Burping' }).click();
+  await toast(page).getByRole('button', { name: 'Details' }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByRole('button', { name: 'Moderate' }).click();
+  await dialog.getByLabel('Note (optional)').fill('after lunch');
+  await dialog.getByRole('button', { name: 'Save' }).click();
+
+  await expect(log(page).getByRole('button', { name: /Burping/ })).toContainText('Moderate, after lunch');
+  await expect(page.getByTestId('summary-symptoms')).toContainText('Burping at 13:20 (moderate)');
+
+  await page.getByRole('button', { name: 'Home', exact: true }).click();
+  const ask = page.getByRole('region', { name: 'Ask Claude' });
+  await ask.getByRole('button', { name: 'Today' }).click();
+  await ask.getByLabel('Your question (optional)').fill('Why the burping?');
+  await ask.getByRole('button', { name: 'Copy for Claude' }).click();
+  await expect(ask).toContainText('Copied today. Paste it into Claude.');
+  const copied = await page.evaluate(() => navigator.clipboard.readText());
+  expect(copied).toContain('- 13:20 SYMPTOM: Burping (moderate); note: after lunch');
+  expect(copied).toContain('Coffee: Double espresso (home)');
+  expect(copied).toContain('My question: Why the burping?');
+});

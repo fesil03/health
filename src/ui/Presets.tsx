@@ -175,6 +175,48 @@ function AddSupplement({ onAdd }: { onAdd: (name: string) => void }) {
   );
 }
 
+function SymptomEditor({ deviceId }: { deviceId: string }) {
+  const [list, setList, saved] = useDraft('symptoms');
+  const toast = useToast();
+  const [name, setName] = useState('');
+  if (!list || !saved) return null;
+  return (
+    <details className="section" data-testid="symptom-presets">
+      <summary className="cursor-pointer font-semibold">Symptoms</summary>
+      <p className="mb-2 mt-2 text-xs text-steel-dim">The buttons on the Symptoms card. Removing one keeps what you already logged.</p>
+      {list.map((s, i) => (
+        <div key={s.id} className="mb-2 grid grid-cols-[1fr_auto] items-center gap-2">
+          <input className={cell} aria-label="Symptom name" value={s.name} onChange={(e) => setList(list.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))} />
+          <button className="btn-ghost text-sm" aria-label={`Remove ${s.name}`} onClick={() => setList(list.filter((_, j) => j !== i))}>
+            Remove
+          </button>
+        </div>
+      ))}
+      <div className="flex gap-2">
+        <input className={cell} placeholder="New symptom" value={name} onChange={(e) => setName(e.target.value)} />
+        <button
+          className="btn-ghost text-sm"
+          disabled={!name.trim() || list.some((s) => s.id === slug(name))}
+          onClick={() => {
+            setList([...list, { id: slug(name), name: name.trim() }]);
+            setName('');
+          }}
+        >
+          Add
+        </button>
+      </div>
+      <SaveBar
+        dirty={JSON.stringify(list) !== JSON.stringify(saved)}
+        onSave={async () => {
+          await savePreset(db, deviceId, 'symptoms', list);
+          scheduleSync();
+          toast({ text: 'Symptoms saved' });
+        }}
+      />
+    </details>
+  );
+}
+
 function WaterEditor({ deviceId }: { deviceId: string }) {
   const [w, setW, saved] = useDraft('water');
   const toast = useToast();
@@ -214,6 +256,7 @@ export function PresetEditors() {
       <h2 className="px-1 pt-2 text-sm text-steel-dim">Presets (shared by all devices)</h2>
       <CoffeeEditor deviceId={deviceId} />
       <SupplementEditor deviceId={deviceId} />
+      <SymptomEditor deviceId={deviceId} />
       <AlcoholEditor deviceId={deviceId} />
       <WaterEditor deviceId={deviceId} />
     </>

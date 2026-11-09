@@ -17,7 +17,8 @@ export default {
           stool: '#BE8A57',
           supp: '#9FC79C',
           drink: '#D88EA2',
-          sleep: '#4F6694'
+          sleep: '#4F6694',
+          symptom: '#B9A3E3'
         },
         warn: '#E8B85C',
         err: '#F0A08A'
