@@ -40,10 +40,15 @@ test('quick logging: water, undo, coffee shots, stool details, supplements, alco
   await page.getByRole('button', { name: 'Save' }).click();
   await expect(log(page)).toContainText('Type 4, brown');
 
-  // Supplements tick / untick
-  await page.getByRole('button', { name: 'Zinc', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Zinc (taken)' })).toBeVisible();
-  await expect(log(page)).toContainText('Zinc');
+  // Supplements: each tap is a dose; a second dose shows ×2; Undo removes the last one
+  await page.getByRole('button', { name: 'L-theanine', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'L-theanine (taken)' })).toBeVisible();
+  await page.getByRole('button', { name: 'L-theanine (taken)' }).click();
+  await expect(page.getByRole('button', { name: 'L-theanine (taken 2 times)' })).toContainText('×2');
+  await expect(log(page).getByRole('button', { name: /L-theanine/ })).toHaveCount(2);
+  await page.getByRole('button', { name: 'Undo' }).click();
+  await expect(page.getByRole('button', { name: 'L-theanine (taken)' })).toBeVisible();
+  await expect(log(page).getByRole('button', { name: /L-theanine/ })).toHaveCount(1);
 
   // Alcohol
   await page.getByRole('button', { name: 'Beer 330 ml' }).click();

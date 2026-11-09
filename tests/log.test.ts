@@ -8,7 +8,8 @@ import {
   logCoffee,
   logStool,
   logWater,
-  setSupplementTaken,
+  logSupplement,
+  supplementDoses,
   stoolNeedsDoctorNote,
   updateRecord,
   type Ctx
@@ -81,14 +82,36 @@ describe('logging', () => {
     expect(await dayLog(db, '2026-11-08')).toHaveLength(0);
   });
 
-  it('supplement ticks are one per day and can be unticked', async () => {
+  it('a supplement can be taken several times a day, each dose with its own time', async () => {
+    const db = freshDb();
+    const theanine = DEFAULT_PRESETS.supplements.find((s) => s.id === 'l-theanine')!;
+    const first = await logSupplement(ctxAt(db, '2026-11-09T08:30:00', 1), theanine);
+    await logSupplement(ctxAt(db, '2026-11-09T13:00:00', 2), theanine);
+    const log = await dayLog(db, '2026-11-09');
+    expect(log.map((r) => r.at)).toEqual(['2026-11-09T08:30:00', '2026-11-09T13:00:00']);
+    expect(supplementDoses(log).get('l-theanine')).toBe(2);
+    // Removing one dose leaves the other
+    await deleteRecord(db, 'phone', first, 5000);
+    expect(supplementDoses(await dayLog(db, '2026-11-09')).get('l-theanine')).toBe(1);
+  });
+
+  it('a dose logged by an older version (fixed per-day id) still counts as one dose', async () => {
     const db = freshDb();
     const zinc = DEFAULT_PRESETS.supplements.find((s) => s.id === 'zinc')!;
-    await setSupplementTaken(ctxAt(db, '2026-11-08T22:00:00', 1), zinc, true);
-    await setSupplementTaken(ctxAt(db, '2026-11-08T22:05:00', 2), zinc, true);
-    expect(await dayLog(db, '2026-11-08')).toHaveLength(1);
-    await setSupplementTaken(ctxAt(db, '2026-11-08T22:06:00', 3), zinc, false);
-    expect(await dayLog(db, '2026-11-08')).toHaveLength(0);
+    await db.saveLocal([
+      {
+        id: 'supp:2026-11-08:zinc',
+        kind: 'supplement',
+        day: '2026-11-08',
+        at: '2026-11-08T22:00:00',
+        updatedAt: 1,
+        deviceId: 'old',
+        source: 'manual',
+        data: { supplementId: 'zinc', name: 'Zinc' }
+      }
+    ]);
+    await logSupplement(ctxAt(db, '2026-11-08T23:00:00', 2), zinc);
+    expect(supplementDoses(await dayLog(db, '2026-11-08')).get('zinc')).toBe(2);
   });
 
   it('delete leaves a tombstone and hides the entry', async () => {

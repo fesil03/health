@@ -86,14 +86,23 @@ export const logBody = (ctx: Ctx, kg: number | null, fatPct: number | null) =>
 export const addNote = (ctx: Ctx, text: string, auto = false) =>
   save(ctx, newRecord<NoteData>(ctx, 'note', auto ? { text, auto } : { text }));
 
-/** One record per supplement per day, with a fixed id so two devices can't double-count. */
-export const supplementId = (day: string, suppId: string) => `supp:${day}:${suppId}`;
+/**
+ * Each dose is its own record with its own time, so a supplement can be taken several times a
+ * day (e.g. L-theanine with every coffee). Before v0.4.0 a dose had the fixed id
+ * `supp:<day>:<supplementId>`; those old records still count as one dose each.
+ */
+export const logSupplement = (ctx: Ctx, item: SupplementItem) =>
+  save(ctx, newRecord<SupplementData>(ctx, 'supplement', { supplementId: item.id, name: item.name }));
 
-export async function setSupplementTaken(ctx: Ctx, item: SupplementItem, taken: boolean): Promise<void> {
-  const id = supplementId(dayOf(ctx.at), item.id);
-  const rec = newRecord<SupplementData>(ctx, 'supplement', { supplementId: item.id, name: item.name }, id);
-  if (!taken) rec.deleted = true;
-  await ctx.db.saveLocal([rec as HealthRecord]);
+/** Doses per supplement id, from a day's records. */
+export function supplementDoses(recs: HealthRecord[]): Map<string, number> {
+  const n = new Map<string, number>();
+  for (const r of recs) {
+    if (r.kind !== 'supplement' || r.deleted) continue;
+    const id = (r.data as SupplementData).supplementId;
+    n.set(id, (n.get(id) ?? 0) + 1);
+  }
+  return n;
 }
 
 /** Replace a record's data (and optionally its time), keeping its id. */

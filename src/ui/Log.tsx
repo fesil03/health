@@ -10,7 +10,8 @@ import {
   logNicotine,
   logStool,
   logWater,
-  setSupplementTaken,
+  logSupplement,
+  supplementDoses,
   type Ctx
 } from '../lib/log';
 import type { BodyData, CoffeeData, HealthRecord, NicotineForm, SleepData, StoolData, WaterData } from '../lib/model';
@@ -294,7 +295,7 @@ export function Log() {
   const waterMl = of<WaterData>('water').reduce((s, r) => s + r.data.ml, 0);
   const coffees = of<CoffeeData>('coffee');
   const stools = of<StoolData>('stool');
-  const taken = new Set(of<{ supplementId: string }>('supplement').map((r) => r.data.supplementId));
+  const doses = supplementDoses(entries);
   const target = presets.water.targetMl;
   const pct = Math.min(100, Math.round((waterMl / target) * 100));
   // Pace: where you'd be on an even 08:00–22:00 day
@@ -385,31 +386,34 @@ export function Log() {
         )}
       </Section>
 
-      <Section title="Supplements" lane="supplement" {...timeProps('supplements')} aside={`${active.filter((s) => taken.has(s.id)).length} of ${active.length}`}>
+      <Section title="Supplements" lane="supplement" {...timeProps('supplements')} aside={`${active.filter((s) => doses.has(s.id)).length} of ${active.length}`}>
         {(['morning', 'night'] as const).map((when) => (
           <div key={when} className="mb-3 last:mb-0">
             <p className="mb-1.5 text-xs text-steel-dim">{when === 'morning' ? 'Morning' : 'Night'}</p>
             <div className="flex flex-wrap gap-2">
               {active
                 .filter((s) => s.when === when)
-                .map((s: SupplementItem) => (
-                  <Chip
-                    key={s.id}
-                    active={taken.has(s.id)}
-                    label={`${s.name}${taken.has(s.id) ? ' (taken)' : ''}`}
-                    onClick={async () => {
-                      await setSupplementTaken(ctx('supplements'), s, !taken.has(s.id));
-                      setWhenFor('supplements')({ kind: 'now' });
-                      scheduleSync();
-                    }}
-                  >
-                    {taken.has(s.id) ? '✓ ' : ''}
-                    {s.name}
-                  </Chip>
-                ))}
+                .map((s: SupplementItem) => {
+                  const n = doses.get(s.id) ?? 0;
+                  return (
+                    <Chip
+                      key={s.id}
+                      active={n > 0}
+                      label={`${s.name}${n === 1 ? ' (taken)' : n > 1 ? ` (taken ${n} times)` : ''}`}
+                      onClick={async () =>
+                        logged(await logSupplement(ctx('supplements'), s), n ? `${s.name}: dose ${n + 1} logged` : `${s.name} logged`, false, 'supplements')
+                      }
+                    >
+                      {n === 1 && '✓ '}
+                      {s.name}
+                      {n > 1 && <span className="cond ml-1.5 font-bold">×{n}</span>}
+                    </Chip>
+                  );
+                })}
             </div>
           </div>
         ))}
+        <p className="meta">Tap again for another dose. To remove one, tap it in the day log below.</p>
       </Section>
 
       <Section title="Alcohol and nicotine" lane="drink" {...timeProps('drinks')}>
