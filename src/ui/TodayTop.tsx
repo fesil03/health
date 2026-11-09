@@ -1,5 +1,5 @@
 // Three ways to show "today" at the top of the Log screen. Chosen in Settings.
-import type { CoffeeData, HealthRecord, MealData, SleepData, StoolData, WaterData } from '../lib/model';
+import type { CoffeeData, HealthRecord, MealData, SleepData, StoolData, SymptomData, WaterData } from '../lib/model';
 import type { Presets } from '../lib/presets';
 import { KIND_COLORS, Glyph, GlyphIcon } from './Glyphs';
 import { clock, hm } from './format';
@@ -60,7 +60,8 @@ function useDay({ entries, sleep, presets }: Props) {
     suppTaken: active.filter((s) => taken.has(s.id)).length,
     suppTotal: active.length,
     alcoholG: of<{ grams: number }>('alcohol').reduce((s, r) => s + r.data.grams, 0),
-    nicotine: of<{ count: number }>('nicotine').reduce((s, r) => s + r.data.count, 0)
+    nicotine: of<{ count: number }>('nicotine').reduce((s, r) => s + r.data.count, 0),
+    symptoms: of<SymptomData>('symptom')
   };
 }
 
@@ -74,13 +75,14 @@ const ROWS: { lane: keyof typeof KIND_COLORS; label: string; kinds: string[] }[]
   { lane: 'meal', label: 'Meals', kinds: ['meal'] },
   { lane: 'stool', label: 'Stool', kinds: ['stool'] },
   { lane: 'supplement', label: 'Supps', kinds: ['supplement'] },
-  { lane: 'drink', label: 'Drinks', kinds: ['alcohol', 'nicotine'] }
+  { lane: 'drink', label: 'Drinks', kinds: ['alcohol', 'nicotine'] },
+  { lane: 'symptom', label: 'Symptoms', kinds: ['symptom'] }
 ];
 
 function Timeline(p: Props) {
   const d = useDay(p);
   const W = 360;
-  const L = 52; // label column
+  const L = 62; // label column
   const R = 8;
   const rowH = 22;
   const top = 18;
@@ -224,6 +226,18 @@ function Summary(p: Props) {
         {d.alcoholG ? <> <B>{d.alcoholG} g</B> of alcohol.</> : null}
         {d.nicotine ? <> {count(d.nicotine, 'nicotine', 'nicotine')} logged.</> : null}
       </p>
+      {d.symptoms.length > 0 && (
+        <p data-testid="summary-symptoms">
+          {d.symptoms.map((s, i) => (
+            <span key={s.id}>
+              {i > 0 && ', '}
+              <B>{i === 0 ? s.data.name : s.data.name.toLowerCase()}</B> at {clock(s.at)}
+              {s.data.severity ? ` (${['', 'mild', 'moderate', 'strong'][s.data.severity]})` : ''}
+            </span>
+          ))}
+          .
+        </p>
+      )}
     </div>
   );
 }

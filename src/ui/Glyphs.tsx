@@ -7,7 +7,8 @@ export const KIND_COLORS = {
   stool: '#BE8A57',
   supplement: '#9FC79C',
   drink: '#D88EA2',
-  sleep: '#4F6694'
+  sleep: '#4F6694',
+  symptom: '#B9A3E3'
 };
 
 type Lane = keyof typeof KIND_COLORS;
@@ -31,6 +32,8 @@ export function Glyph({ lane, x = 0, y = 0, rot = 0 }: { lane: Lane; x?: number;
       return <path transform={t} d="M0 -4.6 L4 0 L0 4.6 L-4 0 Z" fill={c} />;
     case 'sleep':
       return <rect transform={t} x={-6} y={-2.5} width={12} height={5} rx={2.5} fill={c} />;
+    case 'symptom':
+      return <path transform={t} d="M-3.4 -3.4 L3.4 3.4 M3.4 -3.4 L-3.4 3.4" stroke={c} strokeWidth={2.2} strokeLinecap="round" />;
   }
 }
 

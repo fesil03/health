@@ -11,10 +11,11 @@ import {
   logStool,
   logWater,
   logSupplement,
+  logSymptom,
   supplementDoses,
   type Ctx
 } from '../lib/log';
-import type { BodyData, CoffeeData, HealthRecord, NicotineForm, SleepData, StoolData, WaterData } from '../lib/model';
+import type { BodyData, CoffeeData, HealthRecord, NicotineForm, SleepData, StoolData, SymptomData, WaterData } from '../lib/model';
 import { describeCounts, parsePaste, planPaste, type PastePlanItem, type PasteResult } from '../lib/paste';
 import { loadPresets, type SupplementItem } from '../lib/presets';
 import { scheduleSync } from '../lib/syncClient';
@@ -32,7 +33,8 @@ const LANE_OF: Record<string, Parameters<typeof GlyphIcon>[0]['lane'] | undefine
   stool: 'stool',
   supplement: 'supplement',
   alcohol: 'drink',
-  nicotine: 'drink'
+  nicotine: 'drink',
+  symptom: 'symptom'
 };
 
 const whenLabel = (w: LogWhen) =>
@@ -243,12 +245,13 @@ export function Log() {
   const [day, setDay] = useState(today);
   const [editing, setEditing] = useState<HealthRecord | null>(null);
   const [sheet, setSheet] = useState<'body' | 'paste' | null>(null);
-  type CardKey = 'water' | 'coffee' | 'stool' | 'supplements' | 'drinks';
+  type CardKey = 'water' | 'coffee' | 'stool' | 'supplements' | 'symptoms' | 'drinks';
   const [whens, setWhens] = useState<Record<CardKey, LogWhen>>({
     water: { kind: 'now' },
     coffee: { kind: 'now' },
     stool: { kind: 'now' },
     supplements: { kind: 'now' },
+    symptoms: { kind: 'now' },
     drinks: { kind: 'now' }
   });
   const setWhenFor = (k: CardKey) => (w: LogWhen) => setWhens((all) => ({ ...all, [k]: w }));
@@ -295,6 +298,7 @@ export function Log() {
   const waterMl = of<WaterData>('water').reduce((s, r) => s + r.data.ml, 0);
   const coffees = of<CoffeeData>('coffee');
   const stools = of<StoolData>('stool');
+  const symptoms = of<SymptomData>('symptom');
   const doses = supplementDoses(entries);
   const target = presets.water.targetMl;
   const pct = Math.min(100, Math.round((waterMl / target) * 100));
@@ -414,6 +418,17 @@ export function Log() {
           </div>
         ))}
         <p className="meta">Tap again for another dose. To remove one, tap it in the day log below.</p>
+      </Section>
+
+      <Section title="Symptoms" lane="symptom" {...timeProps('symptoms')} aside={symptoms.length ? `${symptoms.length} today` : undefined}>
+        <div className="flex flex-wrap gap-2">
+          {presets.symptoms.map((s) => (
+            <Chip key={s.id} onClick={async () => logged(await logSymptom(ctx('symptoms'), s), `${s.name} logged`, true, 'symptoms')}>
+              {s.name}
+            </Chip>
+          ))}
+        </div>
+        <p className="mt-2.5 text-xs text-steel-dim">Tap Details after logging to add how strong it was and a note.</p>
       </Section>
 
       <Section title="Alcohol and nicotine" lane="drink" {...timeProps('drinks')}>

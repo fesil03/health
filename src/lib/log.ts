@@ -12,9 +12,10 @@ import type {
   NoteData,
   StoolData,
   SupplementData,
+  SymptomData,
   WaterData
 } from './model';
-import { alcoholGrams, type AlcoholPreset, type CoffeePreset, type SupplementItem } from './presets';
+import { alcoholGrams, type AlcoholPreset, type CoffeePreset, type SupplementItem, type SymptomItem } from './presets';
 import { dayOf } from './time';
 
 export interface Ctx {
@@ -93,6 +94,10 @@ export const addNote = (ctx: Ctx, text: string, auto = false) =>
  */
 export const logSupplement = (ctx: Ctx, item: SupplementItem) =>
   save(ctx, newRecord<SupplementData>(ctx, 'supplement', { supplementId: item.id, name: item.name }));
+
+/** A symptom at the card's time; strength and a note can be added from the toast or the day log. */
+export const logSymptom = (ctx: Ctx, item: SymptomItem) =>
+  save(ctx, newRecord<SymptomData>(ctx, 'symptom', { symptomId: item.id, name: item.name, severity: null }));
 
 /** Doses per supplement id, from a day's records. */
 export function supplementDoses(recs: HealthRecord[]): Map<string, number> {

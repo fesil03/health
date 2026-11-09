@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.5.0 — Symptoms and "Copy for Claude" (2026-11-09)
+
+- New Symptoms card on Log: one tap logs burping, bloating, heartburn, stomach ache, nausea,
+  headache, low energy, brain fog, low mood or anxious at the card's time. Details adds how
+  strong (mild, moderate, strong) and a note. The list is editable in Settings → Presets.
+- Symptoms show on the timeline (their own row), in the summary and in the day log.
+- Home → "Ask Claude about it": copies a readable summary of today or the last 3, 7 or 14 days
+  (sleep and stages, heart rate, steps, blood oxygen, meals with macros, coffee, supplements,
+  symptoms, stool, alcohol, water), plus an optional question, to paste into a chat. Works with
+  the iPhone's clipboard rules; if copying fails the text is shown to copy by hand.
+
 ## v0.4.0 — Several doses of a supplement a day (2026-11-09)
 
 - Each tap on a supplement logs a dose with its own time, so L-theanine with every coffee is
