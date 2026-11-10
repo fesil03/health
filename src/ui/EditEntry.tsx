@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { db } from '../lib/db';
+import { describeCheckin, type CheckinData } from '../lib/checkins';
 import { deleteRecord, stoolNeedsDoctorNote, updateRecord } from '../lib/log';
+import { CheckinFields } from './CheckinCard';
 import type {
   AlcoholData,
   BodyData,
@@ -70,6 +72,10 @@ export function describe(r: HealthRecord): { title: string; detail: string } {
     }
     case 'note':
       return { title: 'Note', detail: (r.data as NoteData).text };
+    case 'checkin': {
+      const d = r.data as CheckinData;
+      return { title: d.type === 'morning' ? 'Morning check-in' : 'Night check-in', detail: describeCheckin(d) };
+    }
     case 'symptom': {
       const d = r.data as SymptomData;
       return { title: d.name, detail: [d.severity && SEVERITY[d.severity], d.note].filter(Boolean).join(', ') || 'Tap to add how strong' };
@@ -159,6 +165,7 @@ export function EditEntry({ rec, deviceId, onClose }: { rec: HealthRecord; devic
   }
 
   const readOnly = rec.kind === 'lab';
+  const fixedTime = readOnly || rec.kind === 'checkin'; // a check-in belongs to its day
 
   return (
     <Sheet title={title} onClose={onClose}>
@@ -251,7 +258,8 @@ export function EditEntry({ rec, deviceId, onClose }: { rec: HealthRecord; devic
             />
           </label>
         )}
-        {!readOnly && (
+        {rec.kind === 'checkin' && <CheckinFields d={data} set={setData} />}
+        {!fixedTime && (
           <label className="block">
             <span className="label">Time</span>
             <input className="input" type="datetime-local" value={toInput(at)} onChange={(e) => setAt(fromInput(e.target.value))} />

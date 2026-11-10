@@ -22,6 +22,7 @@ import type {
   SymptomData,
   WaterData
 } from './model';
+import { describeCheckin, type CheckinData } from './checkins';
 import type { Presets } from './presets';
 import { addDays, minutesBetween } from './time';
 
@@ -187,6 +188,10 @@ export async function buildClaudeSummary(db: HealthDB, presets: Presets, opts: C
     );
     if (sleeps[0]) lines.push(sleepLine(sleeps[0], mine.filter((r) => r.kind === 'sleep_stage') as HealthRecord<SleepStageData>[]));
     for (const nap of sleeps.slice(1)) lines.push(`Nap: ${hhmm(nap.at)}–${hhmm(nap.data.end)}`);
+    for (const type of ['morning', 'night'] as const) {
+      const c = mine.find((r) => r.kind === 'checkin' && (r.data as CheckinData).type === type);
+      if (c) lines.push(`${type === 'morning' ? 'Morning' : 'Night'} check-in: ${describeCheckin(c.data as CheckinData)}`);
+    }
     lines.push(...watchLines(mine));
     const water = mine.filter((r) => r.kind === 'water') as HealthRecord<WaterData>[];
     if (water.length) lines.push(`Water: ${water.reduce((s, r) => s + r.data.ml, 0).toLocaleString('en-US')} ml in total`);
