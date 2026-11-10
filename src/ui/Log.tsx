@@ -21,6 +21,7 @@ import { loadPresets, type SupplementItem } from '../lib/presets';
 import { scheduleSync } from '../lib/syncClient';
 import { addDays, nowNaive, resolveLogTime, todayLocal, type LogWhen } from '../lib/time';
 import { GlyphIcon } from './Glyphs';
+import { CheckinCards } from './CheckinCard';
 import { DEFAULT_TOP, TodayTop, TopSwitch, type TopStyle } from './TodayTop';
 import { describe, EditEntry } from './EditEntry';
 import { clock, shortDay } from './format';
@@ -326,6 +327,8 @@ export function Log() {
           ›
         </button>
       </div>
+
+      {day === today && <CheckinCards today={today} hour={Math.floor(hour)} deviceId={deviceId} />}
 
       <TopSwitch value={topStyle} onChange={(t) => void db.setSetting('topStyle', t)} />
       <TodayTop style={topStyle} entries={entries} sleep={sleep} presets={presets} nowHours={nowH} day={day} />

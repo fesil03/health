@@ -12,7 +12,7 @@ export type SamsungKind =
   | 'energy' // from the watch bridge
   | 'skin_temp'; // from the watch bridge
 
-export type LogKind = 'stool' | 'coffee' | 'alcohol' | 'nicotine' | 'body' | 'supplement' | 'meal' | 'lab' | 'note' | 'symptom';
+export type LogKind = 'stool' | 'coffee' | 'alcohol' | 'nicotine' | 'body' | 'supplement' | 'meal' | 'lab' | 'note' | 'symptom' | 'checkin';
 
 /** `water` comes from both Samsung and the app's taps. `preset` holds synced preset lists. */
 export type Kind = SamsungKind | LogKind | 'water' | 'preset';

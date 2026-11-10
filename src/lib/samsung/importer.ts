@@ -62,5 +62,6 @@ export const KIND_LABELS: Record<Exclude<Kind, 'preset'>, string> = {
   meal: 'Meals',
   lab: 'Lab results',
   note: 'Chart notes',
-  symptom: 'Symptoms'
+  symptom: 'Symptoms',
+  checkin: 'Check-ins'
 };

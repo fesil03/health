@@ -25,7 +25,7 @@ test('quick logging: water, undo, coffee shots, stool details, supplements, alco
   await toast(page).getByRole('button', { name: 'Details' }).click();
   await page.getByRole('button', { name: 'More shots' }).click();
   await expect(page.getByText('192 mg caffeine')).toBeVisible();
-  await page.getByRole('button', { name: 'Save' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Save' }).click();
   await expect(log(page)).toContainText('192 mg');
 
   // Stool: one tap, then details with a warning colour
@@ -37,7 +37,7 @@ test('quick logging: water, undo, coffee shots, stool details, supplements, alco
   await page.getByRole('radio', { name: 'brown' }).click();
   await expect(page.getByTestId('doctor-note')).toHaveCount(0);
   await page.getByRole('group', { name: 'Felt complete' }).getByRole('button', { name: 'Yes' }).click();
-  await page.getByRole('button', { name: 'Save' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Save' }).click();
   await expect(log(page)).toContainText('Type 4, brown');
 
   // Supplements: each tap is a dose; a second dose shows ×2; Undo removes the last one
@@ -58,7 +58,7 @@ test('quick logging: water, undo, coffee shots, stool details, supplements, alco
   await page.getByRole('button', { name: /^Weight/ }).click();
   await page.getByLabel('Weight (kg)').fill('72,5');
   await page.getByLabel('Body fat (%)').fill('18');
-  await page.getByRole('button', { name: 'Save' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Save' }).click();
   await expect(log(page)).toContainText('72.5 kg, 18% fat');
 
   // Paste a meal (no time = now) and labs (stored on their own date)
@@ -77,7 +77,7 @@ marker | value | unit | ref_low | ref_high
 Vitamin D | 32 | ng/mL | 30 | 100`);
   await expect(page.getByTestId('paste-preview')).toContainText('Lunch: rice; eggplant');
   await expect(page.getByTestId('paste-preview')).toContainText('Labs: 1 markers');
-  await page.getByRole('button', { name: 'Save' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Save' }).click();
   await expect(log(page)).toContainText('Lunch');
   await expect(log(page)).not.toContainText('Labs');
 
@@ -88,7 +88,7 @@ Vitamin D | 32 | ng/mL | 30 | 100`);
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T21:00`;
   });
   await page.getByRole('dialog').getByLabel('Time', { exact: true }).fill(yesterday);
-  await page.getByRole('button', { name: 'Save' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Save' }).click();
   await expect(log(page)).not.toContainText('Beer');
   await page.getByRole('button', { name: 'Previous day' }).click();
   await expect(log(page)).toContainText('Beer 330 ml');
@@ -194,20 +194,20 @@ test('stool details from the Stool card, and supplement times can be changed', a
   const stoolList = page.getByTestId('stool-list');
   await stoolList.getByRole('button', { name: /Add details/ }).click();
   await page.getByRole('radio', { name: 'Type 5' }).click();
-  await page.getByRole('button', { name: 'Save' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Save' }).click();
   await expect(stoolList).toContainText('Type 5');
 
   // Supplement ticked now, actually taken at 21:30
   await page.getByRole('button', { name: 'Zinc', exact: true }).click();
   await log(page).getByRole('button', { name: /Zinc/ }).click();
   await page.getByRole('dialog').getByLabel('Time', { exact: true }).fill('2026-11-08T21:30');
-  await page.getByRole('button', { name: 'Save' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Save' }).click();
   await expect(log(page).getByRole('button', { name: /Zinc/ })).toContainText('21:30');
 
   // ...or moved to yesterday: leaves today, unticks today's chip
   await log(page).getByRole('button', { name: /Zinc/ }).click();
   await page.getByRole('dialog').getByLabel('Time', { exact: true }).fill('2026-11-07T23:00');
-  await page.getByRole('button', { name: 'Save' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Save' }).click();
   await expect(log(page)).not.toContainText('Zinc');
   await expect(page.getByRole('button', { name: 'Zinc', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Previous day' }).click();
@@ -299,4 +299,41 @@ test('symptoms: log, add strength and note, see them in the summary and in Copy 
   expect(copied).toContain('- 13:20 SYMPTOM: Burping (moderate); note: after lunch');
   expect(copied).toContain('Coffee: Double espresso (home)');
   expect(copied).toContain('My question: Why the burping?');
+});
+
+test('check-ins: morning questions, then the night one in the evening, editable from the day log', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-11-10T08:10:00+08:00'));
+  await page.goto('./');
+  const morning = page.getByRole('region', { name: 'Morning check-in' });
+  await expect(morning).toBeVisible();
+  // Last night's was never answered: it asks about yesterday; skip it
+  const missed = page.getByRole('region', { name: "Last night's check-in" });
+  await expect(missed.getByRole('group', { name: 'Exercised yesterday?' })).toBeVisible();
+  await missed.getByRole('button', { name: 'Not now' }).click();
+  await expect(page.getByRole('region', { name: "Last night's check-in" })).toHaveCount(0);
+
+  await morning.getByRole('group', { name: 'Woke up rested?' }).getByRole('button', { name: 'Yes' }).click();
+  await morning.getByRole('group', { name: 'Hit snooze?' }).getByRole('button', { name: 'Yes' }).click();
+  await morning.getByRole('button', { name: 'Save' }).click();
+  await expect(morning).toHaveCount(0);
+  await expect(page.getByTestId('top-summary')).toContainText('Woke rested, hit snooze.');
+  await expect(log(page).getByRole('button', { name: /Morning check-in/ })).toContainText('Woke rested, hit snooze');
+
+  // Change an answer from the day log
+  await log(page).getByRole('button', { name: /Morning check-in/ }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByLabel('Time')).toHaveCount(0);
+  await dialog.getByRole('group', { name: 'Hit snooze?' }).getByRole('button', { name: 'No' }).click();
+  await dialog.getByRole('button', { name: 'Save' }).click();
+  await expect(log(page).getByRole('button', { name: /Morning check-in/ })).toContainText('Woke rested, no snooze');
+
+  // Evening
+  await page.clock.setFixedTime(new Date('2026-11-10T22:40:00+08:00'));
+  await page.reload();
+  const night = page.getByRole('region', { name: 'Night check-in' });
+  await night.getByRole('group', { name: 'Exercised today?' }).getByRole('button', { name: 'No' }).click();
+  await night.getByRole('button', { name: 'A lot' }).click();
+  await night.getByRole('button', { name: 'Save' }).click();
+  await expect(page.getByTestId('checkins')).toHaveCount(0);
+  await expect(page.getByTestId('top-summary')).toContainText('No exercise, screen in bed: a lot (45 min or more).');
 });

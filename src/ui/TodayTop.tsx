@@ -1,5 +1,6 @@
 // Three ways to show "today" at the top of the Log screen. Chosen in Settings.
 import type { CoffeeData, HealthRecord, MealData, SleepData, StoolData, SymptomData, WaterData } from '../lib/model';
+import { describeCheckin, type CheckinData } from '../lib/checkins';
 import type { Presets } from '../lib/presets';
 import { KIND_COLORS, Glyph, GlyphIcon } from './Glyphs';
 import { clock, hm } from './format';
@@ -61,7 +62,9 @@ function useDay({ entries, sleep, presets }: Props) {
     suppTotal: active.length,
     alcoholG: of<{ grams: number }>('alcohol').reduce((s, r) => s + r.data.grams, 0),
     nicotine: of<{ count: number }>('nicotine').reduce((s, r) => s + r.data.count, 0),
-    symptoms: of<SymptomData>('symptom')
+    symptoms: of<SymptomData>('symptom'),
+    morning: of<CheckinData>('checkin').find((c) => c.data.type === 'morning'),
+    night: of<CheckinData>('checkin').find((c) => c.data.type === 'night')
   };
 }
 
@@ -203,6 +206,7 @@ function Summary(p: Props) {
         ) : (
           <>No sleep data for this night yet.</>
         )}
+        {d.morning && <> {describeCheckin(d.morning.data)}.</>}
       </p>
       <p>
         {d.coffees.length ? (
@@ -226,6 +230,7 @@ function Summary(p: Props) {
         {d.alcoholG ? <> <B>{d.alcoholG} g</B> of alcohol.</> : null}
         {d.nicotine ? <> {count(d.nicotine, 'nicotine', 'nicotine')} logged.</> : null}
       </p>
+      {d.night && <p>{describeCheckin(d.night.data)}.</p>}
       {d.symptoms.length > 0 && (
         <p data-testid="summary-symptoms">
           {d.symptoms.map((s, i) => (

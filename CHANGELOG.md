@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.6.0 — Morning and night check-ins (2026-11-10)
+
+- Morning check-in (04:00–12:00) on the Log screen: woke up rested, slept through the night,
+  hit snooze. Night check-in (20:00–04:00): exercised today, and screen time in bed before
+  sleep (none, quick, a while, a lot). A missed night check-in is offered the next morning,
+  asking about "yesterday". "Not now" hides a card for that day.
+- One check-in of each kind per day, the same on every device; answers can be changed from
+  the day log. They show in the summary and in Copy for Claude.
+- Browser tests now click Save inside the open dialog, so they pass at any time of day.
+
 ## v0.5.0 — Symptoms and "Copy for Claude" (2026-11-09)
 
 - New Symptoms card on Log: one tap logs burping, bloating, heartburn, stomach ache, nausea,
